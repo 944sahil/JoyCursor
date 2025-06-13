@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(controller_mouse_mapping)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+project(ControllerMouseMapping)
 
 # Find SDL2 package
 find_package(SDL2 REQUIRED)
@@ -10,11 +7,14 @@ find_package(SDL2 REQUIRED)
 # Include directories
 include_directories(${SDL2_INCLUDE_DIRS})
 
-# Add executables
+# Add source files
+file(GLOB SOURCES "src/*.cpp")
+
+# Create executables
 add_executable(mouse_mapper src/mouse_mapper.cpp)
 add_executable(controller_restore src/controller_restore.cpp)
 
-# Link SDL2
+# Link libraries
 target_link_libraries(mouse_mapper ${SDL2_LIBRARIES})
 target_link_libraries(controller_restore ${SDL2_LIBRARIES})
 

@@ -1,12 +1,23 @@
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <cmath>
+#include <windows.h>
 
 // Constants for mouse movement
 const float RIGHT_STICK_SENSITIVITY = 0.5f;  // Sensitivity for right stick
-const float LEFT_STICK_SENSITIVITY = 0.2f;   // Lower sensitivity for left stick
+const float LEFT_STICK_SENSITIVITY = 0.1f;   // Lower sensitivity for left stick
 const int DEADZONE = 8000;                  // Ignore small movements below this threshold
 const int MAX_AXIS_VALUE = 32767;           // Maximum value for SDL controller axis
+
+// Function to simulate mouse clicks using Windows API
+void simulateMouseClick(bool isLeftClick, bool isDown) {
+    INPUT input = {0};
+    input.type = INPUT_MOUSE;
+    input.mi.dwFlags = isLeftClick ? 
+        (isDown ? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_LEFTUP) :
+        (isDown ? MOUSEEVENTF_RIGHTDOWN : MOUSEEVENTF_RIGHTUP);
+    SendInput(1, &input, sizeof(INPUT));
+}
 
 int main(int argc, char* argv[]) {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) {
@@ -40,11 +51,28 @@ int main(int argc, char* argv[]) {
     std::cout << "Controller to mouse mapping active. Press [X] on window or CTRL+C to quit.\n";
     std::cout << "Use the right analog stick for fast mouse movement.\n";
     std::cout << "Use the left analog stick for precise mouse movement.\n";
+    std::cout << "Press A for left click and B for right click.\n";
 
     while (running) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
+            }
+            else if (event.type == SDL_CONTROLLERBUTTONDOWN) {
+                if (event.cbutton.button == SDL_CONTROLLER_BUTTON_A) {
+                    simulateMouseClick(true, true);  // Left click down
+                }
+                else if (event.cbutton.button == SDL_CONTROLLER_BUTTON_B) {
+                    simulateMouseClick(false, true);  // Right click down
+                }
+            }
+            else if (event.type == SDL_CONTROLLERBUTTONUP) {
+                if (event.cbutton.button == SDL_CONTROLLER_BUTTON_A) {
+                    simulateMouseClick(true, false);  // Left click up
+                }
+                else if (event.cbutton.button == SDL_CONTROLLER_BUTTON_B) {
+                    simulateMouseClick(false, false);  // Right click up
+                }
             }
         }
 
