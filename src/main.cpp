@@ -1,8 +1,22 @@
+#include "core/controller_manager.h"
 #include <iostream>
+#include <thread>
+#include <atomic>
+#include <chrono>
 
 int main() {
-    std::cout << "Hello, C++ Project!" << std::endl;
-    std::cout << "Press Enter to exit..." << std::endl;
-    std::cin.get();  // Wait for user to press Enter
+    ControllerManager* manager = createControllerManager();
+    std::cout << "Controller detection running. Press Enter to exit..." << std::endl;
+    std::atomic<bool> running{true};
+    std::thread pollThread([&]() {
+        while (running) {
+            manager->pollEvents();
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    });
+    std::cin.get();
+    running = false;
+    pollThread.join();
+    delete manager;
     return 0;
 } 
