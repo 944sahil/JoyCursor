@@ -13,18 +13,13 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <cmath>
 
 using nlohmann::json;
 
 namespace {
 const char* CONTROLLERS_JSON = "controllers.json";
 const char* MAPPINGS_JSON = "mappings.json";
-
-// struct LeftStickMouseMapping {
-//     bool enabled = false;
-//     float sensitivity = 0.05f;
-//     int deadzone = 8000;
-// };
 
 std::set<std::string> load_known_guids() {
     std::set<std::string> guids;
@@ -96,6 +91,16 @@ public:
                 case SDL_EVENT_GAMEPAD_REMOVED:
                     onGamepadRemoved(event.gdevice);
                     break;
+                case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+                    if (event.gbutton.button == SDL_GAMEPAD_BUTTON_LEFT_STICK) {
+                        m_l3_held[event.gbutton.which] = true;
+                    }
+                    break;
+                case SDL_EVENT_GAMEPAD_BUTTON_UP:
+                    if (event.gbutton.button == SDL_GAMEPAD_BUTTON_LEFT_STICK) {
+                        m_l3_held[event.gbutton.which] = false;
+                    }
+                    break;
             }
         }
         handleMouseMovement();
@@ -122,6 +127,7 @@ private:
         logInfo(("Mapping for controller [" + guid_str + "]: " +
             "enabled=" + (mapping.enabled ? "true" : "false") +
             ", sensitivity=" + std::to_string(mapping.sensitivity) +
+            ", boosted_sensitivity=" + std::to_string(mapping.boosted_sensitivity) +
             ", deadzone=" + std::to_string(mapping.deadzone) +
             ", smoothing=" + std::to_string(mapping.smoothing)).c_str());
         
@@ -151,7 +157,6 @@ private:
     }
 
     void handleMouseMovement() {
-        // logInfo("handleMouseMovement called"); // Uncomment for verbose logging
         for (auto const& [instance_id, gamepad] : m_active_controllers) {
             if (!m_active_mappings.count(instance_id) || !m_active_mappings.at(instance_id).enabled) {
                 continue;
@@ -159,20 +164,21 @@ private:
 
             const auto& mapping = m_active_mappings.at(instance_id);
 
+            // Use boosted sensitivity if L3 is held
+            float effective_sensitivity = mapping.sensitivity;
+            if (m_l3_held[instance_id]) {
+                effective_sensitivity = mapping.boosted_sensitivity;
+            }
+
             Sint16 x_axis = SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_LEFTX);
             Sint16 y_axis = SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_LEFTY);
 
-            // if (x_axis != 0 || y_axis != 0) {
-            //     logInfo(("x_axis: " + std::to_string(x_axis) + ", y_axis: " + std::to_string(y_axis)).c_str());
-            // }
-
-            if (abs(x_axis) < mapping.deadzone) x_axis = 0;
-            if (abs(y_axis) < mapping.deadzone) y_axis = 0;
+            if (std::abs(x_axis) < mapping.deadzone) x_axis = 0;
+            if (std::abs(y_axis) < mapping.deadzone) y_axis = 0;
             
-            float mx = static_cast<float>(x_axis) / 32767.0f * mapping.sensitivity * 100;
-            float my = static_cast<float>(y_axis) / 32767.0f * mapping.sensitivity * 100;
+            float mx = static_cast<float>(x_axis) / 32767.0f * effective_sensitivity * 100;
+            float my = static_cast<float>(y_axis) / 32767.0f * effective_sensitivity * 100;
 
-            // logInfo(("Moving mouse by mx: " + std::to_string(mx) + ", my: " + std::to_string(my)).c_str());
             // Smoothing logic
             auto& vel = m_left_stick_velocity[instance_id];
             vel.first = vel.first * (1.0f - mapping.smoothing) + mx * mapping.smoothing;
@@ -192,6 +198,7 @@ private:
     std::unordered_map<int, SDL_Gamepad*> m_active_controllers;
     std::unordered_map<int, LeftStickMouseMapping> m_active_mappings;
     std::unordered_map<int, std::pair<float, float>> m_left_stick_velocity;
+    std::unordered_map<int, bool> m_l3_held;
 };
 
 // Factory function for main.cpp

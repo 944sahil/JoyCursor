@@ -59,7 +59,8 @@ void Config::createDefaultMappingsFile() {
                     {"enabled", true},
                     {"sensitivity", 0.05},
                     {"deadzone", 8000},
-                    {"smoothing", 0.2}
+                    {"smoothing", 0.2},
+                    {"boosted_sensitivity", 0.3}
                 }}
             }}
         }}

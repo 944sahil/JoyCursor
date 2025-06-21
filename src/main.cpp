@@ -3,6 +3,7 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <SDL3/SDL.h>
 
 int main() {
     ControllerManager* manager = createControllerManager();
@@ -11,7 +12,8 @@ int main() {
     std::thread pollThread([&]() {
         while (running) {
             manager->pollEvents();
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            // std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            SDL_Delay(5);
         }
     });
     std::cin.get();

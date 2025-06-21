@@ -25,6 +25,7 @@ LeftStickMouseMapping MappingManager::getLeftStickMapping(const std::string& gui
     mapping.sensitivity = config.value("sensitivity", 0.05f);
     mapping.deadzone = config.value("deadzone", 8000);
     mapping.smoothing = config.value("smoothing", 0.2f);
+    mapping.boosted_sensitivity = config.value("boosted_sensitivity", 0.3f);
 
     // Cache and return
     m_parsed_mappings[guid] = mapping;
