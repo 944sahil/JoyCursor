@@ -25,6 +25,7 @@ private:
     void loadControllers();
     void loadMappings();
     void createDefaultMappingsFile();
+    void createFallbackMappings();
 
     nlohmann::json m_mappings;
     std::set<std::string> m_known_controller_guids;

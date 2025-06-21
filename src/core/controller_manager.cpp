@@ -1,5 +1,5 @@
 // controller_manager.cpp
-// Platform-independent controller manager logic (to be implemented) 
+// Platform-independent controller manager logic
 
 #include "types.h"
 #include "controller_manager.h"
@@ -16,6 +16,13 @@
 #include <cmath>
 
 using nlohmann::json;
+
+// Platform-specific function declarations
+extern "C" {
+    void platform_simulate_mouse_click(int clickType);
+    void platform_simulate_mouse_down(int clickType);
+    void platform_simulate_mouse_up(int clickType);
+}
 
 namespace {
 const char* CONTROLLERS_JSON = "controllers.json";
@@ -62,8 +69,6 @@ json load_mappings() {
 class ControllerManagerImpl : public ControllerManager {
 public:
     ControllerManagerImpl() : m_mapping_manager(m_config.getMappingsJson()) {
-        // Initializing with SDL_INIT_VIDEO is crucial for SDL_WarpMouseGlobal to work,
-        // even without creating a window. This matches the behavior of the working experiment.
         if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_EVENTS) < 0) {
             logError(SDL_GetError());
         } else {
@@ -80,7 +85,7 @@ public:
     void detectControllers() override {} // No-op for now
 
     void pollEvents() override {
-        SDL_UpdateGamepads(); // Explicitly update gamepad state before polling.
+        SDL_UpdateGamepads();
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -92,14 +97,10 @@ public:
                     onGamepadRemoved(event.gdevice);
                     break;
                 case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
-                    if (event.gbutton.button == SDL_GAMEPAD_BUTTON_LEFT_STICK) {
-                        m_l3_held[event.gbutton.which] = true;
-                    }
+                    handleButtonDown(event.gbutton);
                     break;
                 case SDL_EVENT_GAMEPAD_BUTTON_UP:
-                    if (event.gbutton.button == SDL_GAMEPAD_BUTTON_LEFT_STICK) {
-                        m_l3_held[event.gbutton.which] = false;
-                    }
+                    handleButtonUp(event.gbutton);
                     break;
             }
         }
@@ -152,8 +153,7 @@ private:
     }
 
     void onGamepadAxis(const SDL_GamepadAxisEvent& event) {
-        // This function is now unused, we are polling instead.
-        // The logic has been moved to handleMouseMovement.
+        // Unused - polling instead
     }
 
     void handleMouseMovement() {
@@ -193,12 +193,124 @@ private:
         }
     }
 
+    void handleButtonDown(const SDL_GamepadButtonEvent& event) {
+        // Handle L3 for boosted sensitivity
+        if (event.button == SDL_GAMEPAD_BUTTON_LEFT_STICK) {
+            m_l3_held[event.which] = true;
+            return;
+        }
+        
+        // Handle other buttons for actions
+        std::string button_name = getButtonName(static_cast<SDL_GamepadButton>(event.button));
+        if (!button_name.empty()) {
+            // Track that this button is now held
+            m_buttons_held[event.which].insert(button_name);
+            executeButtonAction(event.which, button_name, true);
+        }
+    }
+
+    void handleButtonUp(const SDL_GamepadButtonEvent& event) {
+        // Handle L3 for boosted sensitivity
+        if (event.button == SDL_GAMEPAD_BUTTON_LEFT_STICK) {
+            m_l3_held[event.which] = false;
+            return;
+        }
+        
+        // Handle other buttons for actions
+        std::string button_name = getButtonName(static_cast<SDL_GamepadButton>(event.button));
+        if (!button_name.empty()) {
+            // Remove from held buttons and execute release action
+            m_buttons_held[event.which].erase(button_name);
+            executeButtonAction(event.which, button_name, false);
+        }
+    }
+
+    std::string getButtonName(SDL_GamepadButton button) {
+        switch (button) {
+            case SDL_GAMEPAD_BUTTON_SOUTH: return "button_a";
+            case SDL_GAMEPAD_BUTTON_EAST: return "button_b";
+            case SDL_GAMEPAD_BUTTON_WEST: return "button_x";
+            case SDL_GAMEPAD_BUTTON_NORTH: return "button_y";
+            case SDL_GAMEPAD_BUTTON_LEFT_SHOULDER: return "left_shoulder";
+            case SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER: return "right_shoulder";
+            case SDL_GAMEPAD_BUTTON_START: return "start";
+            case SDL_GAMEPAD_BUTTON_BACK: return "back";
+            case SDL_GAMEPAD_BUTTON_GUIDE: return "guide";
+            case SDL_GAMEPAD_BUTTON_DPAD_UP: return "dpad_up";
+            case SDL_GAMEPAD_BUTTON_DPAD_DOWN: return "dpad_down";
+            case SDL_GAMEPAD_BUTTON_DPAD_LEFT: return "dpad_left";
+            case SDL_GAMEPAD_BUTTON_DPAD_RIGHT: return "dpad_right";
+            default: return "";
+        }
+    }
+
+    void executeButtonAction(int instance_id, const std::string& button_name, bool is_pressed) {
+        if (!m_active_controllers.count(instance_id)) {
+            return;
+        }
+        
+        // Get the controller's GUID
+        SDL_Gamepad* gamepad = m_active_controllers[instance_id];
+        SDL_Joystick* joystick = SDL_GetGamepadJoystick(gamepad);
+        SDL_GUID guid = SDL_GetJoystickGUID(joystick);
+        std::string guid_str = guid_to_string(guid);
+        
+        // Get button mapping and execute actions
+        ButtonMapping mapping = m_mapping_manager.getButtonMapping(guid_str, button_name);
+        if (mapping.enabled) {
+            if (is_pressed) {
+                // Button pressed - execute mouse down actions
+                executeButtonActionsDown(mapping);
+            } else {
+                // Button released - execute mouse up actions
+                executeButtonActionsUp(mapping);
+            }
+        }
+    }
+
+    void executeButtonActionsDown(const ButtonMapping& mapping) {
+        for (const auto& action : mapping.actions) {
+            if (!action.enabled) {
+                continue;
+            }
+            
+            // Handle mouse clicks - send down event
+            if (action.click_type != MouseClickType::NONE) {
+                platform_simulate_mouse_down(static_cast<int>(action.click_type));
+            }
+            
+            // Handle keyboard keys (TODO: implement when keyboard simulation is added)
+            if (action.key_type != KeyboardKeyType::NONE) {
+                logInfo("Keyboard action (not implemented yet)");
+            }
+        }
+    }
+
+    void executeButtonActionsUp(const ButtonMapping& mapping) {
+        for (const auto& action : mapping.actions) {
+            if (!action.enabled) {
+                continue;
+            }
+            
+            // Handle mouse clicks - send up event
+            if (action.click_type != MouseClickType::NONE) {
+                platform_simulate_mouse_up(static_cast<int>(action.click_type));
+            }
+            
+            // Handle keyboard keys (TODO: implement when keyboard simulation is added)
+            if (action.key_type != KeyboardKeyType::NONE) {
+                logInfo("Keyboard action (not implemented yet)");
+            }
+        }
+    }
+
     Config m_config;
     MappingManager m_mapping_manager;
     std::unordered_map<int, SDL_Gamepad*> m_active_controllers;
     std::unordered_map<int, LeftStickMouseMapping> m_active_mappings;
     std::unordered_map<int, std::pair<float, float>> m_left_stick_velocity;
     std::unordered_map<int, bool> m_l3_held;
+    std::unordered_map<int, std::set<std::string>> m_buttons_held;
 };
 
 // Factory function for main.cpp

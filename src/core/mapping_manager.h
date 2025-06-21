@@ -18,9 +18,17 @@ public:
     // Creates a new mapping from default if the GUID is not found.
     LeftStickMouseMapping getLeftStickMapping(const std::string& guid);
 
+    // Gets the button mapping for a given controller GUID and button.
+    // Creates a new mapping from default if the GUID is not found.
+    ButtonMapping getButtonMapping(const std::string& guid, const std::string& button_name);
+
+    // Executes all enabled actions for a button mapping
+    static void executeButtonActions(const ButtonMapping& mapping);
+
 private:
     void createMappingFromDefault(const std::string& guid);
 
     nlohmann::json& m_mappings_json;
     std::unordered_map<std::string, LeftStickMouseMapping> m_parsed_mappings;
+    std::unordered_map<std::string, std::unordered_map<std::string, ButtonMapping>> m_parsed_button_mappings;
 }; 

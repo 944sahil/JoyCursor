@@ -1,0 +1,132 @@
+{
+    "mappings": {
+        "default": {
+            "left_stick_mouse": {
+                "enabled": true,
+                "sensitivity": 0.05,
+                "deadzone": 8000,
+                "smoothing": 0.2,
+                "boosted_sensitivity": 0.3
+            },
+            "buttons": {
+                "button_a": {
+                    "enabled": true,
+                    "actions": [
+                        {
+                            "action_type": "mouse_left_click",
+                            "enabled": true
+                        }
+                    ]
+                },
+                "button_b": {
+                    "enabled": false,
+                    "actions": [
+                        {
+                            "action_type": "none",
+                            "enabled": false
+                        }
+                    ]
+                },
+                "button_x": {
+                    "enabled": false,
+                    "actions": [
+                        {
+                            "action_type": "none",
+                            "enabled": false
+                        }
+                    ]
+                },
+                "button_y": {
+                    "enabled": false,
+                    "actions": [
+                        {
+                            "action_type": "none",
+                            "enabled": false
+                        }
+                    ]
+                },
+                "left_shoulder": {
+                    "enabled": false,
+                    "actions": [
+                        {
+                            "action_type": "none",
+                            "enabled": false
+                        }
+                    ]
+                },
+                "right_shoulder": {
+                    "enabled": true,
+                    "actions": [
+                        {
+                            "action_type": "mouse_right_click",
+                            "enabled": true
+                        }
+                    ]
+                },
+                "start": {
+                    "enabled": false,
+                    "actions": [
+                        {
+                            "action_type": "none",
+                            "enabled": false
+                        }
+                    ]
+                },
+                "back": {
+                    "enabled": false,
+                    "actions": [
+                        {
+                            "action_type": "none",
+                            "enabled": false
+                        }
+                    ]
+                },
+                "guide": {
+                    "enabled": false,
+                    "actions": [
+                        {
+                            "action_type": "none",
+                            "enabled": false
+                        }
+                    ]
+                },
+                "dpad_up": {
+                    "enabled": false,
+                    "actions": [
+                        {
+                            "action_type": "none",
+                            "enabled": false
+                        }
+                    ]
+                },
+                "dpad_down": {
+                    "enabled": false,
+                    "actions": [
+                        {
+                            "action_type": "none",
+                            "enabled": false
+                        }
+                    ]
+                },
+                "dpad_left": {
+                    "enabled": false,
+                    "actions": [
+                        {
+                            "action_type": "none",
+                            "enabled": false
+                        }
+                    ]
+                },
+                "dpad_right": {
+                    "enabled": false,
+                    "actions": [
+                        {
+                            "action_type": "none",
+                            "enabled": false
+                        }
+                    ]
+                }
+            }
+        }
+    }
+} 

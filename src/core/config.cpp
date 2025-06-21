@@ -8,6 +8,7 @@
 namespace {
     const char* CONTROLLERS_JSON = "controllers.json";
     const char* MAPPINGS_JSON = "mappings.json";
+    const char* RESOURCES_MAPPINGS = "mappings.json"; // Will be copied to build/bin/ by CMake
 }
 
 Config::Config() {
@@ -50,7 +51,30 @@ void Config::loadMappings() {
 }
 
 void Config::createDefaultMappingsFile() {
-    logInfo("mappings.json not found, creating a default one.");
+    logInfo("mappings.json not found, creating from resources template.");
+    
+    // Try to read from resources (copied by CMake to build/bin/)
+    std::ifstream resources_in(RESOURCES_MAPPINGS);
+    if (resources_in) {
+        try {
+            nlohmann::json resources_mappings;
+            resources_in >> resources_mappings;
+            m_mappings = resources_mappings;
+            logInfo("Successfully loaded mappings from resources template.");
+        } catch (const std::exception& e) {
+            logError("Failed to parse resources mappings.json, using fallback defaults.");
+            createFallbackMappings();
+        }
+    } else {
+        logInfo("Resources mappings.json not found, using fallback defaults.");
+        createFallbackMappings();
+    }
+    
+    saveMappings();
+}
+
+void Config::createFallbackMappings() {
+    // Minimal fallback if resources file is missing or invalid
     m_mappings = {
         {"mappings", {
             {"default", {
@@ -65,7 +89,6 @@ void Config::createDefaultMappingsFile() {
             }}
         }}
     };
-    saveMappings();
 }
 
 void Config::saveMappings() {
