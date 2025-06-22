@@ -14,10 +14,10 @@ extern "C" {
 MappingManager::MappingManager(nlohmann::json& mappings_json) 
     : m_mappings_json(mappings_json) {}
 
-LeftStickMouseMapping MappingManager::getLeftStickMapping(const std::string& guid) {
+StickMapping MappingManager::getLeftStick(const std::string& guid) {
     // Return cached mapping if already parsed
-    if (m_parsed_mappings.count(guid)) {
-        return m_parsed_mappings[guid];
+    if (m_parsed_left_stick_mappings.count(guid)) {
+        return m_parsed_left_stick_mappings[guid];
     }
 
     // Check if a mapping for this GUID exists in the JSON
@@ -26,16 +26,87 @@ LeftStickMouseMapping MappingManager::getLeftStickMapping(const std::string& gui
     }
 
     // Parse the mapping from JSON
-    LeftStickMouseMapping mapping;
-    const auto& config = m_mappings_json["mappings"][guid]["left_stick_mouse"];
+    StickMapping mapping;
+    const auto& config = m_mappings_json["mappings"][guid]["left_stick"];
     mapping.enabled = config.value("enabled", false);
-    mapping.sensitivity = config.value("sensitivity", 0.05f);
-    mapping.deadzone = config.value("deadzone", 8000);
-    mapping.smoothing = config.value("smoothing", 0.2f);
-    mapping.boosted_sensitivity = config.value("boosted_sensitivity", 0.3f);
+    
+    // Parse action_type
+    std::string action_type_str = config.value("action_type", "cursor");
+    if (action_type_str == "scroll") {
+        mapping.action_type = StickActionType::SCROLL;
+    } else if (action_type_str == "cursor") {
+        mapping.action_type = StickActionType::CURSOR;
+    } else {
+        mapping.action_type = StickActionType::NONE;
+    }
+    
+    mapping.deadzone = config.value("deadzone", mapping.deadzone);
+    
+    // Parse cursor action settings
+    if (config.contains("cursor_action")) {
+        const auto& cursor_config = config["cursor_action"];
+        mapping.cursor_action.sensitivity = cursor_config.value("sensitivity", mapping.cursor_action.sensitivity);
+        mapping.cursor_action.boosted_sensitivity = cursor_config.value("boosted_sensitivity", mapping.cursor_action.boosted_sensitivity);
+        mapping.cursor_action.smoothing = cursor_config.value("smoothing", mapping.cursor_action.smoothing);
+    }
+    
+    // Parse scroll action settings
+    if (config.contains("scroll_action")) {
+        const auto& scroll_config = config["scroll_action"];
+        mapping.scroll_action.sensitivity = scroll_config.value("sensitivity", mapping.scroll_action.sensitivity);
+        mapping.scroll_action.horizontal = scroll_config.value("horizontal", mapping.scroll_action.horizontal);
+    }
 
     // Cache and return
-    m_parsed_mappings[guid] = mapping;
+    m_parsed_left_stick_mappings[guid] = mapping;
+    return mapping;
+}
+
+StickMapping MappingManager::getRightStick(const std::string& guid) {
+    // Return cached mapping if already parsed
+    if (m_parsed_right_stick_mappings.count(guid)) {
+        return m_parsed_right_stick_mappings[guid];
+    }
+
+    // Check if a mapping for this GUID exists in the JSON
+    if (!m_mappings_json["mappings"].contains(guid)) {
+        createMappingFromDefault(guid);
+    }
+
+    // Parse the mapping from JSON
+    StickMapping mapping;
+    const auto& config = m_mappings_json["mappings"][guid]["right_stick"];
+    mapping.enabled = config.value("enabled", false);
+    
+    // Parse action_type
+    std::string action_type_str = config.value("action_type", "none");
+    if (action_type_str == "scroll") {
+        mapping.action_type = StickActionType::SCROLL;
+    } else if (action_type_str == "cursor") {
+        mapping.action_type = StickActionType::CURSOR;
+    } else {
+        mapping.action_type = StickActionType::NONE;
+    }
+    
+    mapping.deadzone = config.value("deadzone", mapping.deadzone);
+    
+    // Parse cursor action settings
+    if (config.contains("cursor_action")) {
+        const auto& cursor_config = config["cursor_action"];
+        mapping.cursor_action.sensitivity = cursor_config.value("sensitivity", mapping.cursor_action.sensitivity);
+        mapping.cursor_action.boosted_sensitivity = cursor_config.value("boosted_sensitivity", mapping.cursor_action.boosted_sensitivity);
+        mapping.cursor_action.smoothing = cursor_config.value("smoothing", mapping.cursor_action.smoothing);
+    }
+    
+    // Parse scroll action settings
+    if (config.contains("scroll_action")) {
+        const auto& scroll_config = config["scroll_action"];
+        mapping.scroll_action.sensitivity = scroll_config.value("sensitivity", mapping.scroll_action.sensitivity);
+        mapping.scroll_action.horizontal = scroll_config.value("horizontal", mapping.scroll_action.horizontal);
+    }
+
+    // Cache and return
+    m_parsed_right_stick_mappings[guid] = mapping;
     return mapping;
 }
 

@@ -2,13 +2,35 @@
 
 #include <vector>
 
-// Represents the mapping settings for the left stick mouse control.
-struct LeftStickMouseMapping {
-    bool enabled = false;
+// Enum for different stick action types
+enum class StickActionType {
+    NONE,       // No action assigned yet
+    CURSOR,     // Move mouse cursor
+    SCROLL      // Scroll mouse wheel
+};
+
+// Represents cursor movement action settings
+struct CursorAction {
     float sensitivity = 0.05f;
-    int deadzone = 8000;
+    float boosted_sensitivity = 0.3f; // Used when L3/R3 is held
     float smoothing = 0.2f;
-    float boosted_sensitivity = 0.3f; // Used when L3 is held
+};
+
+// Represents scroll action settings
+struct ScrollAction {
+    float sensitivity = 1.0f;
+    bool horizontal = false; // true for horizontal scroll, false for vertical
+};
+
+// Represents the mapping settings for stick control (left or right stick)
+struct StickMapping {
+    bool enabled = false;
+    StickActionType action_type = StickActionType::NONE; // No action assigned by default
+    int deadzone = 8000;
+    
+    // Action-specific settings - only the one matching action_type is used
+    CursorAction cursor_action;
+    ScrollAction scroll_action;
 };
 
 // Enum for different mouse click types

@@ -15,8 +15,10 @@ public:
     MappingManager(nlohmann::json& mappings_json);
 
     // Gets the left stick mapping for a given controller GUID.
-    // Creates a new mapping from default if the GUID is not found.
-    LeftStickMouseMapping getLeftStickMapping(const std::string& guid);
+    StickMapping getLeftStick(const std::string& guid);
+
+    // Gets the right stick mapping for a given controller GUID.
+    StickMapping getRightStick(const std::string& guid);
 
     // Gets the button mapping for a given controller GUID and button.
     // Creates a new mapping from default if the GUID is not found.
@@ -29,6 +31,7 @@ private:
     void createMappingFromDefault(const std::string& guid);
 
     nlohmann::json& m_mappings_json;
-    std::unordered_map<std::string, LeftStickMouseMapping> m_parsed_mappings;
+    std::unordered_map<std::string, StickMapping> m_parsed_left_stick_mappings;
+    std::unordered_map<std::string, StickMapping> m_parsed_right_stick_mappings;
     std::unordered_map<std::string, std::unordered_map<std::string, ButtonMapping>> m_parsed_button_mappings;
 }; 

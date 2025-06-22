@@ -1,5 +1,5 @@
 // config.cpp
-// Implementation for config (to be implemented) 
+// Implementation for config 
 
 #include "config.h"
 #include "utils/logging.h"
@@ -79,12 +79,33 @@ void Config::createFallbackMappings() {
         {"mappings", {
             {"default", {
                 {"name", "Default Profile"},
-                {"left_stick_mouse", {
+                {"left_stick", {
                     {"enabled", true},
-                    {"sensitivity", 0.05},
+                    {"action_type", "cursor"},
                     {"deadzone", 8000},
-                    {"smoothing", 0.2},
-                    {"boosted_sensitivity", 0.3}
+                    {"cursor_action", {
+                        {"sensitivity", 0.05},
+                        {"boosted_sensitivity", 0.3},
+                        {"smoothing", 0.2}
+                    }},
+                    {"scroll_action", {
+                        {"sensitivity", 1.0},
+                        {"horizontal", false}
+                    }}
+                }},
+                {"right_stick", {
+                    {"enabled", false},
+                    {"action_type", "none"},
+                    {"deadzone", 8000},
+                    {"cursor_action", {
+                        {"sensitivity", 0.05},
+                        {"boosted_sensitivity", 0.3},
+                        {"smoothing", 0.2}
+                    }},
+                    {"scroll_action", {
+                        {"sensitivity", 1.0},
+                        {"horizontal", false}
+                    }}
                 }}
             }}
         }}

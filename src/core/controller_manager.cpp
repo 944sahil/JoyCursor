@@ -121,16 +121,28 @@ private:
         const char* name = SDL_GetGamepadName(gamepad);
 
         m_active_controllers[event.which] = gamepad;
-        m_active_mappings[event.which] = m_mapping_manager.getLeftStickMapping(guid_str);
+        m_left_stick_mappings[event.which] = m_mapping_manager.getLeftStick(guid_str);
+        m_right_stick_mappings[event.which] = m_mapping_manager.getRightStick(guid_str);
         
         // Log the current mapping configuration
-        const auto& mapping = m_active_mappings[event.which];
+        const auto& left_mapping = m_left_stick_mappings[event.which];
+        const auto& right_mapping = m_right_stick_mappings[event.which];
+        
+        std::string left_action_str, right_action_str;
+        switch (left_mapping.action_type) {
+            case StickActionType::CURSOR: left_action_str = "cursor"; break;
+            case StickActionType::SCROLL: left_action_str = "scroll"; break;
+            case StickActionType::NONE: left_action_str = "none"; break;
+        }
+        switch (right_mapping.action_type) {
+            case StickActionType::CURSOR: right_action_str = "cursor"; break;
+            case StickActionType::SCROLL: right_action_str = "scroll"; break;
+            case StickActionType::NONE: right_action_str = "none"; break;
+        }
+        
         logInfo(("Mapping for controller [" + guid_str + "]: " +
-            "enabled=" + (mapping.enabled ? "true" : "false") +
-            ", sensitivity=" + std::to_string(mapping.sensitivity) +
-            ", boosted_sensitivity=" + std::to_string(mapping.boosted_sensitivity) +
-            ", deadzone=" + std::to_string(mapping.deadzone) +
-            ", smoothing=" + std::to_string(mapping.smoothing)).c_str());
+            "left_stick=" + left_action_str + "(" + (left_mapping.enabled ? "enabled" : "disabled") + ")" +
+            ", right_stick=" + right_action_str + "(" + (right_mapping.enabled ? "enabled" : "disabled") + ")").c_str());
         
         m_config.saveMappings();
 
@@ -148,7 +160,8 @@ private:
             logInfo(("Controller disconnected: " + std::string(name)).c_str());
             SDL_CloseGamepad(m_active_controllers[event.which]);
             m_active_controllers.erase(event.which);
-            m_active_mappings.erase(event.which);
+            m_left_stick_mappings.erase(event.which);
+            m_right_stick_mappings.erase(event.which);
         }
     }
 
@@ -158,45 +171,135 @@ private:
 
     void handleMouseMovement() {
         for (auto const& [instance_id, gamepad] : m_active_controllers) {
-            if (!m_active_mappings.count(instance_id) || !m_active_mappings.at(instance_id).enabled) {
-                continue;
+            float total_cursor_x = 0.0f;
+            float total_cursor_y = 0.0f;
+            bool has_cursor_movement = false;
+
+            // Process left stick
+            if (m_left_stick_mappings.count(instance_id) && m_left_stick_mappings.at(instance_id).enabled) {
+                const auto& left_mapping = m_left_stick_mappings.at(instance_id);
+                
+                Sint16 left_x = SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_LEFTX);
+                Sint16 left_y = SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_LEFTY);
+
+                if (std::abs(left_x) < left_mapping.deadzone) left_x = 0;
+                if (std::abs(left_y) < left_mapping.deadzone) left_y = 0;
+                
+                float left_mx = static_cast<float>(left_x) / 32767.0f * 100;
+                float left_my = static_cast<float>(left_y) / 32767.0f * 100;
+
+                if (left_mapping.action_type == StickActionType::CURSOR) {
+                    // Use boosted sensitivity if L3 is held (left stick button)
+                    float effective_sensitivity = left_mapping.cursor_action.sensitivity;
+                    if (m_l3_held[instance_id]) {
+                        effective_sensitivity = left_mapping.cursor_action.boosted_sensitivity;
+                    }
+
+                    float cursor_mx = left_mx * effective_sensitivity;
+                    float cursor_my = left_my * effective_sensitivity;
+
+                    // Smoothing logic
+                    auto& vel = m_left_stick_velocity[instance_id];
+                    vel.first = vel.first * (1.0f - left_mapping.cursor_action.smoothing) + cursor_mx * left_mapping.cursor_action.smoothing;
+                    vel.second = vel.second * (1.0f - left_mapping.cursor_action.smoothing) + cursor_my * left_mapping.cursor_action.smoothing;
+
+                    total_cursor_x += vel.first;
+                    total_cursor_y += vel.second;
+                    has_cursor_movement = true;
+                } else if (left_mapping.action_type == StickActionType::SCROLL) {
+                    // Scroll mouse wheel
+                    if (left_mx != 0.0f || left_my != 0.0f) {
+                        float scroll_x = left_mx * left_mapping.scroll_action.sensitivity;
+                        float scroll_y = left_my * left_mapping.scroll_action.sensitivity;
+                        
+                        if (left_mapping.scroll_action.horizontal) {
+                            // Horizontal scroll
+                            if (scroll_x != 0.0f) {
+                                // TODO: Implement horizontal scroll
+                                logInfo(("Left stick horizontal scroll: " + std::to_string(scroll_x)).c_str());
+                            }
+                        } else {
+                            // Vertical scroll
+                            if (scroll_y != 0.0f) {
+                                // TODO: Implement vertical scroll
+                                logInfo(("Left stick vertical scroll: " + std::to_string(scroll_y)).c_str());
+                            }
+                        }
+                    }
+                }
             }
 
-            const auto& mapping = m_active_mappings.at(instance_id);
+            // Process right stick
+            if (m_right_stick_mappings.count(instance_id) && m_right_stick_mappings.at(instance_id).enabled) {
+                const auto& right_mapping = m_right_stick_mappings.at(instance_id);
+                
+                Sint16 right_x = SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_RIGHTX);
+                Sint16 right_y = SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_RIGHTY);
 
-            // Use boosted sensitivity if L3 is held
-            float effective_sensitivity = mapping.sensitivity;
-            if (m_l3_held[instance_id]) {
-                effective_sensitivity = mapping.boosted_sensitivity;
+                if (std::abs(right_x) < right_mapping.deadzone) right_x = 0;
+                if (std::abs(right_y) < right_mapping.deadzone) right_y = 0;
+                
+                float right_mx = static_cast<float>(right_x) / 32767.0f * 100;
+                float right_my = static_cast<float>(right_y) / 32767.0f * 100;
+
+                if (right_mapping.action_type == StickActionType::CURSOR) {
+                    // Use boosted sensitivity if R3 is held (right stick button)
+                    float effective_sensitivity = right_mapping.cursor_action.sensitivity;
+                    if (m_r3_held[instance_id]) {
+                        effective_sensitivity = right_mapping.cursor_action.boosted_sensitivity;
+                    }
+
+                    float cursor_mx = right_mx * effective_sensitivity;
+                    float cursor_my = right_my * effective_sensitivity;
+
+                    // Smoothing logic
+                    auto& vel = m_right_stick_velocity[instance_id];
+                    vel.first = vel.first * (1.0f - right_mapping.cursor_action.smoothing) + cursor_mx * right_mapping.cursor_action.smoothing;
+                    vel.second = vel.second * (1.0f - right_mapping.cursor_action.smoothing) + cursor_my * right_mapping.cursor_action.smoothing;
+
+                    total_cursor_x += vel.first;
+                    total_cursor_y += vel.second;
+                    has_cursor_movement = true;
+                } else if (right_mapping.action_type == StickActionType::SCROLL) {
+                    // Scroll mouse wheel
+                    if (right_mx != 0.0f || right_my != 0.0f) {
+                        float scroll_x = right_mx * right_mapping.scroll_action.sensitivity;
+                        float scroll_y = right_my * right_mapping.scroll_action.sensitivity;
+                        
+                        if (right_mapping.scroll_action.horizontal) {
+                            // Horizontal scroll
+                            if (scroll_x != 0.0f) {
+                                // TODO: Implement horizontal scroll
+                                logInfo(("Right stick horizontal scroll: " + std::to_string(scroll_x)).c_str());
+                            }
+                        } else {
+                            // Vertical scroll
+                            if (scroll_y != 0.0f) {
+                                // TODO: Implement vertical scroll
+                                logInfo(("Right stick vertical scroll: " + std::to_string(scroll_y)).c_str());
+                            }
+                        }
+                    }
+                }
             }
 
-            Sint16 x_axis = SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_LEFTX);
-            Sint16 y_axis = SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_LEFTY);
-
-            if (std::abs(x_axis) < mapping.deadzone) x_axis = 0;
-            if (std::abs(y_axis) < mapping.deadzone) y_axis = 0;
-            
-            float mx = static_cast<float>(x_axis) / 32767.0f * effective_sensitivity * 100;
-            float my = static_cast<float>(y_axis) / 32767.0f * effective_sensitivity * 100;
-
-            // Smoothing logic
-            auto& vel = m_left_stick_velocity[instance_id];
-            vel.first = vel.first * (1.0f - mapping.smoothing) + mx * mapping.smoothing;
-            vel.second = vel.second * (1.0f - mapping.smoothing) + my * mapping.smoothing;
-
-            // Only move if velocity is nonzero
-            if (vel.first != 0.0f || vel.second != 0.0f) {
+            // Apply combined cursor movement
+            if (has_cursor_movement && (total_cursor_x != 0.0f || total_cursor_y != 0.0f)) {
                 float current_x, current_y;
                 SDL_GetGlobalMouseState(&current_x, &current_y);
-                SDL_WarpMouseGlobal(current_x + vel.first, current_y + vel.second);
+                SDL_WarpMouseGlobal(current_x + total_cursor_x, current_y + total_cursor_y);
             }
         }
     }
 
     void handleButtonDown(const SDL_GamepadButtonEvent& event) {
-        // Handle L3 for boosted sensitivity
+        // Handle L3 and R3 for boosted sensitivity
         if (event.button == SDL_GAMEPAD_BUTTON_LEFT_STICK) {
             m_l3_held[event.which] = true;
+            return;
+        }
+        if (event.button == SDL_GAMEPAD_BUTTON_RIGHT_STICK) {
+            m_r3_held[event.which] = true;
             return;
         }
         
@@ -210,9 +313,13 @@ private:
     }
 
     void handleButtonUp(const SDL_GamepadButtonEvent& event) {
-        // Handle L3 for boosted sensitivity
+        // Handle L3 and R3 for boosted sensitivity
         if (event.button == SDL_GAMEPAD_BUTTON_LEFT_STICK) {
             m_l3_held[event.which] = false;
+            return;
+        }
+        if (event.button == SDL_GAMEPAD_BUTTON_RIGHT_STICK) {
+            m_r3_held[event.which] = false;
             return;
         }
         
@@ -248,10 +355,8 @@ private:
         if (!m_active_controllers.count(instance_id)) {
             return;
         }
-        
-        // Get the controller's GUID
-        SDL_Gamepad* gamepad = m_active_controllers[instance_id];
-        SDL_Joystick* joystick = SDL_GetGamepadJoystick(gamepad);
+
+        SDL_Joystick* joystick = SDL_GetGamepadJoystick(m_active_controllers[instance_id]);
         SDL_GUID guid = SDL_GetJoystickGUID(joystick);
         std::string guid_str = guid_to_string(guid);
         
@@ -259,10 +364,8 @@ private:
         ButtonMapping mapping = m_mapping_manager.getButtonMapping(guid_str, button_name);
         if (mapping.enabled) {
             if (is_pressed) {
-                // Button pressed - execute mouse down actions
                 executeButtonActionsDown(mapping);
             } else {
-                // Button released - execute mouse up actions
                 executeButtonActionsUp(mapping);
             }
         }
@@ -274,7 +377,7 @@ private:
                 continue;
             }
             
-            // Handle mouse clicks - send down event
+            // Handle mouse clicks
             if (action.click_type != MouseClickType::NONE) {
                 platform_simulate_mouse_down(static_cast<int>(action.click_type));
             }
@@ -292,7 +395,7 @@ private:
                 continue;
             }
             
-            // Handle mouse clicks - send up event
+            // Handle mouse clicks
             if (action.click_type != MouseClickType::NONE) {
                 platform_simulate_mouse_up(static_cast<int>(action.click_type));
             }
@@ -307,9 +410,12 @@ private:
     Config m_config;
     MappingManager m_mapping_manager;
     std::unordered_map<int, SDL_Gamepad*> m_active_controllers;
-    std::unordered_map<int, LeftStickMouseMapping> m_active_mappings;
+    std::unordered_map<int, StickMapping> m_left_stick_mappings;
+    std::unordered_map<int, StickMapping> m_right_stick_mappings;
     std::unordered_map<int, std::pair<float, float>> m_left_stick_velocity;
+    std::unordered_map<int, std::pair<float, float>> m_right_stick_velocity;
     std::unordered_map<int, bool> m_l3_held;
+    std::unordered_map<int, bool> m_r3_held;
     std::unordered_map<int, std::set<std::string>> m_buttons_held;
 };
 
