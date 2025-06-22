@@ -19,6 +19,10 @@ public:
     static void simulateKeyDown(KeyboardKeyType keyType);
     static void simulateKeyUp(KeyboardKeyType keyType);
     static WORD getVirtualKeyCode(KeyboardKeyType keyType);
+    
+    // Scroll simulation functions
+    static void simulateScrollVertical(int amount);
+    static void simulateScrollHorizontal(int amount);
 
 private:
     static INPUT createMouseInput(DWORD flags, DWORD data = 0);
@@ -33,4 +37,6 @@ extern "C" {
     void platform_simulate_key_press(int keyType);
     void platform_simulate_key_down(int keyType);
     void platform_simulate_key_up(int keyType);
+    void platform_simulate_scroll_vertical(int amount);
+    void platform_simulate_scroll_horizontal(int amount);
 } 

@@ -18,8 +18,13 @@ struct CursorAction {
 
 // Represents scroll action settings
 struct ScrollAction {
-    float sensitivity = 1.0f;
-    bool horizontal = false; // true for horizontal scroll, false for vertical
+    // Vertical scrolling (up/down)
+    float vertical_sensitivity = 1.0f;
+    int vertical_max_speed = 40;
+    
+    // Horizontal scrolling (left/right)
+    float horizontal_sensitivity = 0.3f;
+    int horizontal_max_speed = 15;
 };
 
 // Represents the mapping settings for stick control (left or right stick)

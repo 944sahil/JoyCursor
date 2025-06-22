@@ -89,13 +89,15 @@ void Config::createFallbackMappings() {
                         {"smoothing", 0.2}
                     }},
                     {"scroll_action", {
-                        {"sensitivity", 1.0},
-                        {"horizontal", false}
+                        {"vertical_sensitivity", 1.0},
+                        {"horizontal_sensitivity", 0.5},
+                        {"vertical_max_speed", 20},
+                        {"horizontal_max_speed", 10}
                     }}
                 }},
                 {"right_stick", {
                     {"enabled", true},
-                    {"action_type", "cursor"},
+                    {"action_type", "scroll"},
                     {"deadzone", 8000},
                     {"cursor_action", {
                         {"sensitivity", 0.3},
@@ -103,8 +105,10 @@ void Config::createFallbackMappings() {
                         {"smoothing", 0.2}
                     }},
                     {"scroll_action", {
-                        {"sensitivity", 1.0},
-                        {"horizontal", false}
+                        {"vertical_sensitivity", 1.0},
+                        {"horizontal_sensitivity", 0.5},
+                        {"vertical_max_speed", 20},
+                        {"horizontal_max_speed", 10}
                     }}
                 }},
                 {"buttons", {

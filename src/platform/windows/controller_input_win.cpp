@@ -150,6 +150,22 @@ WORD ControllerInputWin::getVirtualKeyCode(KeyboardKeyType keyType) {
     }
 }
 
+void ControllerInputWin::simulateScrollVertical(int amount) {
+    INPUT input = {};
+    input.type = INPUT_MOUSE;
+    input.mi.dwFlags = MOUSEEVENTF_WHEEL;
+    input.mi.mouseData = amount;
+    SendInput(1, &input, sizeof(INPUT));
+}
+
+void ControllerInputWin::simulateScrollHorizontal(int amount) {
+    INPUT input = {};
+    input.type = INPUT_MOUSE;
+    input.mi.dwFlags = MOUSEEVENTF_HWHEEL;
+    input.mi.mouseData = amount;
+    SendInput(1, &input, sizeof(INPUT));
+}
+
 // Platform-agnostic extern C interface implementations
 extern "C" {
     void platform_simulate_mouse_click(int clickType) {
@@ -174,5 +190,13 @@ extern "C" {
     
     void platform_simulate_key_up(int keyType) {
         ControllerInputWin::simulateKeyUp(static_cast<KeyboardKeyType>(keyType));
+    }
+    
+    void platform_simulate_scroll_vertical(int amount) {
+        ControllerInputWin::simulateScrollVertical(amount);
+    }
+    
+    void platform_simulate_scroll_horizontal(int amount) {
+        ControllerInputWin::simulateScrollHorizontal(amount);
     }
 } 

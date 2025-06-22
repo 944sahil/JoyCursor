@@ -25,6 +25,8 @@ extern "C" {
     void platform_simulate_key_press(int keyType);
     void platform_simulate_key_down(int keyType);
     void platform_simulate_key_up(int keyType);
+    void platform_simulate_scroll_vertical(int amount);
+    void platform_simulate_scroll_horizontal(int amount);
 }
 
 namespace {
@@ -115,6 +117,14 @@ public:
     }
 
 private:
+    // Apply cubic scroll curve for natural feel
+    float applyScrollCurve(float input) const {
+        // Normalize input to [-1, 1] range first
+        float normalized = input / 100.0f;
+        // Apply cubic curve and preserve sign, but scale up for better responsiveness
+        return std::copysign(normalized * normalized * normalized * 2.0f, normalized);
+    }
+
     void onGamepadAdded(const SDL_GamepadDeviceEvent& event) {
         SDL_Gamepad* gamepad = SDL_OpenGamepad(event.which);
         if (!gamepad) {
@@ -255,8 +265,8 @@ private:
                 if (std::abs(left_x) < left_mapping.deadzone) left_x = 0;
                 if (std::abs(left_y) < left_mapping.deadzone) left_y = 0;
                 
-                float left_mx = static_cast<float>(left_x) / 32767.0f * 100;
-                float left_my = static_cast<float>(left_y) / 32767.0f * 100;
+                float left_mx = std::clamp(static_cast<float>(left_x) / 32767.0f, -1.0f, 1.0f) * 100;
+                float left_my = std::clamp(static_cast<float>(left_y) / 32767.0f, -1.0f, 1.0f) * 100;
 
                 if (left_mapping.action_type == StickActionType::CURSOR) {
                     // Use boosted sensitivity if L3 is held (left stick button)
@@ -277,23 +287,33 @@ private:
                     total_cursor_y += vel.second;
                     has_cursor_movement = true;
                 } else if (left_mapping.action_type == StickActionType::SCROLL) {
-                    // Scroll mouse wheel
+                    // Multi-directional scroll mouse wheel
                     if (left_mx != 0.0f || left_my != 0.0f) {
-                        float scroll_x = left_mx * left_mapping.scroll_action.sensitivity;
-                        float scroll_y = left_my * left_mapping.scroll_action.sensitivity;
+                        // Get scroll settings
+                        float vertical_sensitivity = left_mapping.scroll_action.vertical_sensitivity;
+                        float horizontal_sensitivity = left_mapping.scroll_action.horizontal_sensitivity;
+                        int vertical_max_speed = left_mapping.scroll_action.vertical_max_speed;
+                        int horizontal_max_speed = left_mapping.scroll_action.horizontal_max_speed;
                         
-                        if (left_mapping.scroll_action.horizontal) {
-                            // Horizontal scroll
-                            if (scroll_x != 0.0f) {
-                                // TODO: Implement horizontal scroll
-                                logInfo(("Left stick horizontal scroll: " + std::to_string(scroll_x)).c_str());
-                            }
-                        } else {
-                            // Vertical scroll
-                            if (scroll_y != 0.0f) {
-                                // TODO: Implement vertical scroll
-                                logInfo(("Left stick vertical scroll: " + std::to_string(scroll_y)).c_str());
-                            }
+                        // Calculate scroll amounts with cubic mapping for more natural feel
+                        float curved_y = applyScrollCurve(left_my);
+                        float curved_x = applyScrollCurve(left_mx);
+
+                        // Optional: deadzone to avoid micro-scrolls (apply to original input)
+                        if (std::abs(left_mx) < 5.0f) curved_x = 0; // 5% deadzone
+                        if (std::abs(left_my) < 5.0f) curved_y = 0; // 5% deadzone
+
+                        int scroll_y = static_cast<int>(-curved_y * vertical_sensitivity * vertical_max_speed);
+                        int scroll_x = static_cast<int>(curved_x * horizontal_sensitivity * horizontal_max_speed);
+                        
+                        // Apply vertical scroll
+                        if (scroll_y != 0) {
+                            platform_simulate_scroll_vertical(scroll_y);
+                        }
+                        
+                        // Apply horizontal scroll (if enabled)
+                        if (scroll_x != 0) {
+                            platform_simulate_scroll_horizontal(scroll_x);
                         }
                     }
                 }
@@ -309,8 +329,8 @@ private:
                 if (std::abs(right_x) < right_mapping.deadzone) right_x = 0;
                 if (std::abs(right_y) < right_mapping.deadzone) right_y = 0;
                 
-                float right_mx = static_cast<float>(right_x) / 32767.0f * 100;
-                float right_my = static_cast<float>(right_y) / 32767.0f * 100;
+                float right_mx = std::clamp(static_cast<float>(right_x) / 32767.0f, -1.0f, 1.0f) * 100;
+                float right_my = std::clamp(static_cast<float>(right_y) / 32767.0f, -1.0f, 1.0f) * 100;
 
                 if (right_mapping.action_type == StickActionType::CURSOR) {
                     // Use boosted sensitivity if R3 is held (right stick button)
@@ -331,23 +351,33 @@ private:
                     total_cursor_y += vel.second;
                     has_cursor_movement = true;
                 } else if (right_mapping.action_type == StickActionType::SCROLL) {
-                    // Scroll mouse wheel
+                    // Multi-directional scroll mouse wheel
                     if (right_mx != 0.0f || right_my != 0.0f) {
-                        float scroll_x = right_mx * right_mapping.scroll_action.sensitivity;
-                        float scroll_y = right_my * right_mapping.scroll_action.sensitivity;
+                        // Get scroll settings
+                        float vertical_sensitivity = right_mapping.scroll_action.vertical_sensitivity;
+                        float horizontal_sensitivity = right_mapping.scroll_action.horizontal_sensitivity;
+                        int vertical_max_speed = right_mapping.scroll_action.vertical_max_speed;
+                        int horizontal_max_speed = right_mapping.scroll_action.horizontal_max_speed;
                         
-                        if (right_mapping.scroll_action.horizontal) {
-                            // Horizontal scroll
-                            if (scroll_x != 0.0f) {
-                                // TODO: Implement horizontal scroll
-                                logInfo(("Right stick horizontal scroll: " + std::to_string(scroll_x)).c_str());
-                            }
-                        } else {
-                            // Vertical scroll
-                            if (scroll_y != 0.0f) {
-                                // TODO: Implement vertical scroll
-                                logInfo(("Right stick vertical scroll: " + std::to_string(scroll_y)).c_str());
-                            }
+                        // Calculate scroll amounts with cubic mapping for more natural feel
+                        float curved_y = applyScrollCurve(right_my);
+                        float curved_x = applyScrollCurve(right_mx);
+
+                        // Optional: deadzone to avoid micro-scrolls (apply to original input)
+                        if (std::abs(right_mx) < 5.0f) curved_x = 0; // 5% deadzone
+                        if (std::abs(right_my) < 5.0f) curved_y = 0; // 5% deadzone
+
+                        int scroll_y = static_cast<int>(-curved_y * vertical_sensitivity * vertical_max_speed);
+                        int scroll_x = static_cast<int>(curved_x * horizontal_sensitivity * horizontal_max_speed);
+
+                        // Apply vertical scroll
+                        if (scroll_y != 0) {
+                            platform_simulate_scroll_vertical(scroll_y);
+                        }
+                        
+                        // Apply horizontal scroll (if enabled)
+                        if (scroll_x != 0) {
+                            platform_simulate_scroll_horizontal(scroll_x);
                         }
                     }
                 }

@@ -31,7 +31,7 @@ StickMapping MappingManager::getLeftStick(const std::string& guid) {
     mapping.enabled = config.value("enabled", false);
     
     // Parse action_type
-    std::string action_type_str = config.value("action_type", "cursor");
+    std::string action_type_str = config.value("action_type", "");
     if (action_type_str == "scroll") {
         mapping.action_type = StickActionType::SCROLL;
     } else if (action_type_str == "cursor") {
@@ -53,8 +53,12 @@ StickMapping MappingManager::getLeftStick(const std::string& guid) {
     // Parse scroll action settings
     if (config.contains("scroll_action")) {
         const auto& scroll_config = config["scroll_action"];
-        mapping.scroll_action.sensitivity = scroll_config.value("sensitivity", mapping.scroll_action.sensitivity);
-        mapping.scroll_action.horizontal = scroll_config.value("horizontal", mapping.scroll_action.horizontal);
+        
+        // Parse multi-directional scroll settings
+        mapping.scroll_action.vertical_sensitivity = scroll_config.value("vertical_sensitivity", mapping.scroll_action.vertical_sensitivity);
+        mapping.scroll_action.horizontal_sensitivity = scroll_config.value("horizontal_sensitivity", mapping.scroll_action.horizontal_sensitivity);
+        mapping.scroll_action.vertical_max_speed = scroll_config.value("vertical_max_speed", mapping.scroll_action.vertical_max_speed);
+        mapping.scroll_action.horizontal_max_speed = scroll_config.value("horizontal_max_speed", mapping.scroll_action.horizontal_max_speed);
     }
 
     // Cache and return
@@ -79,7 +83,7 @@ StickMapping MappingManager::getRightStick(const std::string& guid) {
     mapping.enabled = config.value("enabled", false);
     
     // Parse action_type
-    std::string action_type_str = config.value("action_type", "none");
+    std::string action_type_str = config.value("action_type", "");
     if (action_type_str == "scroll") {
         mapping.action_type = StickActionType::SCROLL;
     } else if (action_type_str == "cursor") {
@@ -101,8 +105,12 @@ StickMapping MappingManager::getRightStick(const std::string& guid) {
     // Parse scroll action settings
     if (config.contains("scroll_action")) {
         const auto& scroll_config = config["scroll_action"];
-        mapping.scroll_action.sensitivity = scroll_config.value("sensitivity", mapping.scroll_action.sensitivity);
-        mapping.scroll_action.horizontal = scroll_config.value("horizontal", mapping.scroll_action.horizontal);
+        
+        // Parse multi-directional scroll settings
+        mapping.scroll_action.vertical_sensitivity = scroll_config.value("vertical_sensitivity", mapping.scroll_action.vertical_sensitivity);
+        mapping.scroll_action.horizontal_sensitivity = scroll_config.value("horizontal_sensitivity", mapping.scroll_action.horizontal_sensitivity);
+        mapping.scroll_action.vertical_max_speed = scroll_config.value("vertical_max_speed", mapping.scroll_action.vertical_max_speed);
+        mapping.scroll_action.horizontal_max_speed = scroll_config.value("horizontal_max_speed", mapping.scroll_action.horizontal_max_speed);
     }
 
     // Cache and return
