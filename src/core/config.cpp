@@ -94,17 +94,152 @@ void Config::createFallbackMappings() {
                     }}
                 }},
                 {"right_stick", {
-                    {"enabled", false},
-                    {"action_type", "none"},
+                    {"enabled", true},
+                    {"action_type", "cursor"},
                     {"deadzone", 8000},
                     {"cursor_action", {
-                        {"sensitivity", 0.05},
-                        {"boosted_sensitivity", 0.3},
+                        {"sensitivity", 0.3},
+                        {"boosted_sensitivity", 0.05},
                         {"smoothing", 0.2}
                     }},
                     {"scroll_action", {
                         {"sensitivity", 1.0},
                         {"horizontal", false}
+                    }}
+                }},
+                {"buttons", {
+                    {"button_a", {
+                        {"enabled", true},
+                        {"actions", {
+                            {
+                                {"action_type", "mouse_left_click"},
+                                {"enabled", true}
+                            }
+                        }}
+                    }},
+                    {"button_b", {
+                        {"enabled", true},
+                        {"actions", {
+                            {
+                                {"action_type", "keyboard_escape"},
+                                {"enabled", true},
+                                {"repeat_on_hold", false}
+                            }
+                        }}
+                    }},
+                    {"button_x", {
+                        {"enabled", true},
+                        {"actions", {
+                            {
+                                {"action_type", "keyboard_enter"},
+                                {"enabled", true},
+                                {"repeat_on_hold", false}
+                            }
+                        }}
+                    }},
+                    {"button_y", {
+                        {"enabled", false},
+                        {"actions", {
+                            {
+                                {"action_type", "none"},
+                                {"enabled", false}
+                            }
+                        }}
+                    }},
+                    {"left_shoulder", {
+                        {"enabled", false},
+                        {"actions", {
+                            {
+                                {"action_type", "none"},
+                                {"enabled", false}
+                            }
+                        }}
+                    }},
+                    {"right_shoulder", {
+                        {"enabled", true},
+                        {"actions", {
+                            {
+                                {"action_type", "mouse_right_click"},
+                                {"enabled", true}
+                            }
+                        }}
+                    }},
+                    {"start", {
+                        {"enabled", true},
+                        {"actions", {
+                            {
+                                {"action_type", "keyboard_tab"},
+                                {"enabled", true},
+                                {"repeat_on_hold", false}
+                            }
+                        }}
+                    }},
+                    {"back", {
+                        {"enabled", true},
+                        {"actions", {
+                            {
+                                {"action_type", "keyboard_alt"},
+                                {"enabled", true},
+                                {"repeat_on_hold", false}
+                            }
+                        }}
+                    }},
+                    {"guide", {
+                        {"enabled", false},
+                        {"actions", {
+                            {
+                                {"action_type", "none"},
+                                {"enabled", false}
+                            }
+                        }}
+                    }},
+                    {"dpad_up", {
+                        {"enabled", true},
+                        {"actions", {
+                            {
+                                {"action_type", "keyboard_up"},
+                                {"enabled", true},
+                                {"repeat_on_hold", true},
+                                {"repeat_delay", 500},
+                                {"repeat_interval", 100}
+                            }
+                        }}
+                    }},
+                    {"dpad_down", {
+                        {"enabled", true},
+                        {"actions", {
+                            {
+                                {"action_type", "keyboard_down"},
+                                {"enabled", true},
+                                {"repeat_on_hold", true},
+                                {"repeat_delay", 500},
+                                {"repeat_interval", 100}
+                            }
+                        }}
+                    }},
+                    {"dpad_left", {
+                        {"enabled", true},
+                        {"actions", {
+                            {
+                                {"action_type", "keyboard_left"},
+                                {"enabled", true},
+                                {"repeat_on_hold", true},
+                                {"repeat_delay", 500},
+                                {"repeat_interval", 100}
+                            }
+                        }}
+                    }},
+                    {"dpad_right", {
+                        {"enabled", true},
+                        {"actions", {
+                            {
+                                {"action_type", "keyboard_right"},
+                                {"enabled", true},
+                                {"repeat_on_hold", true},
+                                {"repeat_delay", 500},
+                                {"repeat_interval", 100}
+                            }
+                        }}
                     }}
                 }}
             }}

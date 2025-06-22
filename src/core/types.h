@@ -41,9 +41,25 @@ enum class MouseClickType {
     NONE
 };
 
-// Enum for keyboard key types (extensible for future)
+// Enum for keyboard key types (Windows Virtual Key codes)
 enum class KeyboardKeyType {
-    NONE
+    NONE,
+    // Arrow keys
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT,
+    // Common keys
+    ENTER,
+    ESCAPE,
+    TAB,
+    SPACE,
+    // Modifier keys
+    ALT,
+    CTRL,
+    SHIFT,
+    // Function keys
+    F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12
 };
 
 // Represents a single action that can be performed by a button
@@ -51,6 +67,11 @@ struct ButtonAction {
     MouseClickType click_type = MouseClickType::NONE;
     KeyboardKeyType key_type = KeyboardKeyType::NONE;
     bool enabled = false;
+    
+    // Keyboard-specific settings
+    bool repeat_on_hold = false;     // Whether to repeat key when held
+    int repeat_delay = 500;          // Milliseconds before repeat starts
+    int repeat_interval = 100;       // Milliseconds between repeats
 };
 
 // Represents the mapping settings for a controller button

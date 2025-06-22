@@ -148,14 +148,82 @@ ButtonMapping MappingManager::getButtonMapping(const std::string& guid, const st
                     action.key_type = KeyboardKeyType::NONE;
                 } else if (action_type_str == "keyboard_space") {
                     action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::NONE; // Future: Add SPACE to enum
+                    action.key_type = KeyboardKeyType::SPACE;
                 } else if (action_type_str == "keyboard_escape") {
                     action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::NONE; // Future: Add ESCAPE to enum
+                    action.key_type = KeyboardKeyType::ESCAPE;
+                } else if (action_type_str == "keyboard_enter") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::ENTER;
+                } else if (action_type_str == "keyboard_tab") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::TAB;
+                } else if (action_type_str == "keyboard_alt") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::ALT;
+                } else if (action_type_str == "keyboard_ctrl") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::CTRL;
+                } else if (action_type_str == "keyboard_shift") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::SHIFT;
+                } else if (action_type_str == "keyboard_up") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::UP;
+                } else if (action_type_str == "keyboard_down") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::DOWN;
+                } else if (action_type_str == "keyboard_left") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::LEFT;
+                } else if (action_type_str == "keyboard_right") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::RIGHT;
+                } else if (action_type_str == "keyboard_f1") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::F1;
+                } else if (action_type_str == "keyboard_f2") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::F2;
+                } else if (action_type_str == "keyboard_f3") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::F3;
+                } else if (action_type_str == "keyboard_f4") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::F4;
+                } else if (action_type_str == "keyboard_f5") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::F5;
+                } else if (action_type_str == "keyboard_f6") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::F6;
+                } else if (action_type_str == "keyboard_f7") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::F7;
+                } else if (action_type_str == "keyboard_f8") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::F8;
+                } else if (action_type_str == "keyboard_f9") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::F9;
+                } else if (action_type_str == "keyboard_f10") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::F10;
+                } else if (action_type_str == "keyboard_f11") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::F11;
+                } else if (action_type_str == "keyboard_f12") {
+                    action.click_type = MouseClickType::NONE;
+                    action.key_type = KeyboardKeyType::F12;
                 } else {
                     action.click_type = MouseClickType::NONE;
                     action.key_type = KeyboardKeyType::NONE;
                 }
+                
+                // Parse keyboard-specific settings
+                action.repeat_on_hold = action_json.value("repeat_on_hold", action.repeat_on_hold);
+                action.repeat_delay = action_json.value("repeat_delay", action.repeat_delay);
+                action.repeat_interval = action_json.value("repeat_interval", action.repeat_interval);
                 
                 mapping.actions.push_back(action);
             }

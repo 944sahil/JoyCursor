@@ -22,6 +22,9 @@ extern "C" {
     void platform_simulate_mouse_click(int clickType);
     void platform_simulate_mouse_down(int clickType);
     void platform_simulate_mouse_up(int clickType);
+    void platform_simulate_key_press(int keyType);
+    void platform_simulate_key_down(int keyType);
+    void platform_simulate_key_up(int keyType);
 }
 
 namespace {
@@ -74,6 +77,9 @@ public:
         } else {
             logInfo("SDL initialized for controller detection.");
         }
+        
+        // Initialize repeat timing tracking
+        m_last_repeat_time = SDL_GetTicks();
     }
 
     ~ControllerManagerImpl() override {
@@ -105,6 +111,7 @@ public:
             }
         }
         handleMouseMovement();
+        handleRepeatTiming();
     }
 
 private:
@@ -143,6 +150,69 @@ private:
         logInfo(("Mapping for controller [" + guid_str + "]: " +
             "left_stick=" + left_action_str + "(" + (left_mapping.enabled ? "enabled" : "disabled") + ")" +
             ", right_stick=" + right_action_str + "(" + (right_mapping.enabled ? "enabled" : "disabled") + ")").c_str());
+
+        // Log all in-use button mappings for this controller
+        std::vector<std::string> button_names = {
+            "button_a", "button_b", "button_x", "button_y",
+            "left_shoulder", "right_shoulder", "start", "back", "guide",
+            "dpad_up", "dpad_down", "dpad_left", "dpad_right"
+        };
+        
+        for (const auto& button_name : button_names) {
+            ButtonMapping mapping = m_mapping_manager.getButtonMapping(guid_str, button_name);
+            if (!mapping.enabled) continue;
+            
+            std::vector<std::string> enabled_actions;
+            for (const auto& action : mapping.actions) {
+                if (action.enabled) {
+                    // Mouse click type
+                    if (action.click_type != MouseClickType::NONE) {
+                        switch (action.click_type) {
+                            case MouseClickType::LEFT_CLICK: enabled_actions.push_back("mouse_left_click"); break;
+                            case MouseClickType::RIGHT_CLICK: enabled_actions.push_back("mouse_right_click"); break;
+                            case MouseClickType::MIDDLE_CLICK: enabled_actions.push_back("mouse_middle_click"); break;
+                            default: break;
+                        }
+                    } else if (action.key_type != KeyboardKeyType::NONE) {
+                        // Keyboard key type
+                        switch (action.key_type) {
+                            case KeyboardKeyType::ESCAPE: enabled_actions.push_back("keyboard_escape"); break;
+                            case KeyboardKeyType::ENTER: enabled_actions.push_back("keyboard_enter"); break;
+                            case KeyboardKeyType::TAB: enabled_actions.push_back("keyboard_tab"); break;
+                            case KeyboardKeyType::UP: enabled_actions.push_back("keyboard_up"); break;
+                            case KeyboardKeyType::DOWN: enabled_actions.push_back("keyboard_down"); break;
+                            case KeyboardKeyType::LEFT: enabled_actions.push_back("keyboard_left"); break;
+                            case KeyboardKeyType::RIGHT: enabled_actions.push_back("keyboard_right"); break;
+                            case KeyboardKeyType::ALT: enabled_actions.push_back("keyboard_alt"); break;
+                            case KeyboardKeyType::CTRL: enabled_actions.push_back("keyboard_ctrl"); break;
+                            case KeyboardKeyType::SHIFT: enabled_actions.push_back("keyboard_shift"); break;
+                            case KeyboardKeyType::SPACE: enabled_actions.push_back("keyboard_space"); break;
+                            case KeyboardKeyType::F1: enabled_actions.push_back("keyboard_f1"); break;
+                            case KeyboardKeyType::F2: enabled_actions.push_back("keyboard_f2"); break;
+                            case KeyboardKeyType::F3: enabled_actions.push_back("keyboard_f3"); break;
+                            case KeyboardKeyType::F4: enabled_actions.push_back("keyboard_f4"); break;
+                            case KeyboardKeyType::F5: enabled_actions.push_back("keyboard_f5"); break;
+                            case KeyboardKeyType::F6: enabled_actions.push_back("keyboard_f6"); break;
+                            case KeyboardKeyType::F7: enabled_actions.push_back("keyboard_f7"); break;
+                            case KeyboardKeyType::F8: enabled_actions.push_back("keyboard_f8"); break;
+                            case KeyboardKeyType::F9: enabled_actions.push_back("keyboard_f9"); break;
+                            case KeyboardKeyType::F10: enabled_actions.push_back("keyboard_f10"); break;
+                            case KeyboardKeyType::F11: enabled_actions.push_back("keyboard_f11"); break;
+                            case KeyboardKeyType::F12: enabled_actions.push_back("keyboard_f12"); break;
+                            default: break;
+                        }
+                    }
+                }
+            }
+            if (!enabled_actions.empty()) {
+                std::string actions_str;
+                for (size_t i = 0; i < enabled_actions.size(); ++i) {
+                    actions_str += enabled_actions[i];
+                    if (i + 1 < enabled_actions.size()) actions_str += ", ";
+                }
+                logInfo(("  " + button_name + " => [" + actions_str + "]").c_str());
+            }
+        }
         
         m_config.saveMappings();
 
@@ -364,14 +434,14 @@ private:
         ButtonMapping mapping = m_mapping_manager.getButtonMapping(guid_str, button_name);
         if (mapping.enabled) {
             if (is_pressed) {
-                executeButtonActionsDown(mapping);
+                executeButtonActionsDown(mapping, instance_id, button_name);
             } else {
-                executeButtonActionsUp(mapping);
+                executeButtonActionsUp(mapping, instance_id, button_name);
             }
         }
     }
 
-    void executeButtonActionsDown(const ButtonMapping& mapping) {
+    void executeButtonActionsDown(const ButtonMapping& mapping, int instance_id, const std::string& button_name) {
         for (const auto& action : mapping.actions) {
             if (!action.enabled) {
                 continue;
@@ -382,14 +452,21 @@ private:
                 platform_simulate_mouse_down(static_cast<int>(action.click_type));
             }
             
-            // Handle keyboard keys (TODO: implement when keyboard simulation is added)
+            // Handle keyboard keys
             if (action.key_type != KeyboardKeyType::NONE) {
-                logInfo("Keyboard action (not implemented yet)");
+                platform_simulate_key_down(static_cast<int>(action.key_type));
+                
+                // Track press time for repeat logic
+                if (action.repeat_on_hold) {
+                    Uint32 current_time = SDL_GetTicks();
+                    m_button_press_times[instance_id][button_name] = current_time;
+                    m_last_repeat_times[instance_id][button_name] = current_time;
+                }
             }
         }
     }
 
-    void executeButtonActionsUp(const ButtonMapping& mapping) {
+    void executeButtonActionsUp(const ButtonMapping& mapping, int instance_id, const std::string& button_name) {
         for (const auto& action : mapping.actions) {
             if (!action.enabled) {
                 continue;
@@ -400,9 +477,60 @@ private:
                 platform_simulate_mouse_up(static_cast<int>(action.click_type));
             }
             
-            // Handle keyboard keys (TODO: implement when keyboard simulation is added)
+            // Handle keyboard keys
             if (action.key_type != KeyboardKeyType::NONE) {
-                logInfo("Keyboard action (not implemented yet)");
+                platform_simulate_key_up(static_cast<int>(action.key_type));
+                
+                // Clear repeat timing tracking
+                if (action.repeat_on_hold) {
+                    m_button_press_times[instance_id].erase(button_name);
+                    m_last_repeat_times[instance_id].erase(button_name);
+                }
+            }
+        }
+    }
+
+    void handleRepeatTiming() {
+        Uint32 current_time = SDL_GetTicks();
+        
+        for (auto const& [instance_id, held_buttons] : m_buttons_held) {
+            for (const auto& button_name : held_buttons) {
+                // Get the button mapping to check for repeat actions
+                if (!m_active_controllers.count(instance_id)) {
+                    continue;
+                }
+                
+                SDL_Joystick* joystick = SDL_GetGamepadJoystick(m_active_controllers[instance_id]);
+                SDL_GUID guid = SDL_GetJoystickGUID(joystick);
+                std::string guid_str = guid_to_string(guid);
+                
+                ButtonMapping mapping = m_mapping_manager.getButtonMapping(guid_str, button_name);
+                if (!mapping.enabled) {
+                    continue;
+                }
+                
+                for (const auto& action : mapping.actions) {
+                    if (!action.enabled || action.key_type == KeyboardKeyType::NONE || !action.repeat_on_hold) {
+                        continue;
+                    }
+                    
+                    // Check if it's time for a repeat
+                    auto& press_time = m_button_press_times[instance_id][button_name];
+                    auto& last_repeat = m_last_repeat_times[instance_id][button_name];
+                    
+                    Uint32 time_since_press = current_time - press_time;
+                    Uint32 time_since_last_repeat = current_time - last_repeat;
+                    
+                    // Initial delay before first repeat
+                    if (time_since_press >= action.repeat_delay) {
+                        // Check if it's time for the next repeat
+                        if (time_since_last_repeat >= action.repeat_interval) {
+                            platform_simulate_key_down(static_cast<int>(action.key_type));
+                            platform_simulate_key_up(static_cast<int>(action.key_type));
+                            last_repeat = current_time;
+                        }
+                    }
+                }
             }
         }
     }
@@ -417,6 +545,11 @@ private:
     std::unordered_map<int, bool> m_l3_held;
     std::unordered_map<int, bool> m_r3_held;
     std::unordered_map<int, std::set<std::string>> m_buttons_held;
+    
+    // Repeat timing tracking
+    Uint32 m_last_repeat_time;
+    std::unordered_map<int, std::unordered_map<std::string, Uint32>> m_button_press_times;
+    std::unordered_map<int, std::unordered_map<std::string, Uint32>> m_last_repeat_times;
 };
 
 // Factory function for main.cpp
