@@ -27,11 +27,20 @@ public:
     // Executes all enabled actions for a button mapping
     static void executeButtonActions(const ButtonMapping& mapping);
 
+    // Gets the trigger mapping for a given controller GUID and trigger (e.g., "left_trigger", "right_trigger").
+    TriggerMapping getTriggerMapping(const std::string& guid, const std::string& trigger_name);
+
 private:
     void createMappingFromDefault(const std::string& guid);
+
+    // Helper to parse a ButtonAction from JSON
+    static ButtonAction parseButtonAction(const nlohmann::json& action_json);
+    // Helper to parse a ButtonMapping from JSON
+    static ButtonMapping parseButtonMapping(const nlohmann::json& button_config);
 
     nlohmann::json& m_mappings_json;
     std::unordered_map<std::string, StickMapping> m_parsed_left_stick_mappings;
     std::unordered_map<std::string, StickMapping> m_parsed_right_stick_mappings;
     std::unordered_map<std::string, std::unordered_map<std::string, ButtonMapping>> m_parsed_button_mappings;
+    std::unordered_map<std::string, std::unordered_map<std::string, TriggerMapping>> m_parsed_trigger_mappings;
 }; 

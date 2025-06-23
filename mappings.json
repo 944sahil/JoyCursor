@@ -1,171 +1,172 @@
 {
     "mappings": {
         "default": {
-            "left_stick": {
-                "enabled": true,
-                "action_type": "cursor",
-                "deadzone": 8000,
-                "cursor_action": {
-                    "sensitivity": 0.05,
-                    "boosted_sensitivity": 0.3,
-                    "smoothing": 0.2
-                },
-                "scroll_action": {
-                    "vertical_sensitivity": 1.0,
-                    "horizontal_sensitivity": 0.5,
-                    "vertical_max_speed": 20,
-                    "horizontal_max_speed": 10
-                }
-            },
-            "right_stick": {
-                "enabled": true,
-                "action_type": "scroll",
-                "deadzone": 8000,
-                "cursor_action": {
-                    "sensitivity": 0.3,
-                    "boosted_sensitivity": 0.05,
-                    "smoothing": 0.2
-                },
-                "scroll_action": {
-                    "vertical_sensitivity": 1.0,
-                    "horizontal_sensitivity": 0.5,
-                    "vertical_max_speed": 20,
-                    "horizontal_max_speed": 10
-                }
-            },
             "buttons": {
-                "button_a": {
-                    "enabled": true,
-                    "actions": [
-                        {
-                            "action_type": "mouse_left_click",
-                            "enabled": true
-                        }
-                    ]
-                },
-                "button_b": {
-                    "enabled": true,
-                    "actions": [
-                        {
-                            "action_type": "keyboard_escape",
-                            "enabled": true,
-                            "repeat_on_hold": false
-                        }
-                    ]
-                },
-                "button_x": {
-                    "enabled": true,
-                    "actions": [
-                        {
-                            "action_type": "keyboard_enter",
-                            "enabled": true,
-                            "repeat_on_hold": false
-                        }
-                    ]
-                },
-                "button_y": {
-                    "enabled": false,
-                    "actions": [
-                        {
-                            "action_type": "none",
-                            "enabled": false
-                        }
-                    ]
-                },
-                "left_shoulder": {
-                    "enabled": false,
-                    "actions": [
-                        {
-                            "action_type": "none",
-                            "enabled": false
-                        }
-                    ]
-                },
-                "right_shoulder": {
-                    "enabled": true,
-                    "actions": [
-                        {
-                            "action_type": "mouse_right_click",
-                            "enabled": true
-                        }
-                    ]
-                },
-                "start": {
-                    "enabled": true,
-                    "actions": [
-                        {
-                            "action_type": "keyboard_tab",
-                            "enabled": true,
-                            "repeat_on_hold": false
-                        }
-                    ]
-                },
                 "back": {
-                    "enabled": true,
                     "actions": [
                         {
                             "action_type": "keyboard_alt",
                             "enabled": true,
                             "repeat_on_hold": false
                         }
-                    ]
+                    ],
+                    "enabled": true
                 },
-                "guide": {
-                    "enabled": false,
+                "button_a": {
+                    "actions": [
+                        {
+                            "action_type": "mouse_left_click",
+                            "enabled": true
+                        }
+                    ],
+                    "enabled": true
+                },
+                "button_b": {
+                    "actions": [
+                        {
+                            "action_type": "keyboard_escape",
+                            "enabled": true,
+                            "repeat_on_hold": false
+                        }
+                    ],
+                    "enabled": true
+                },
+                "button_x": {
+                    "actions": [
+                        {
+                            "action_type": "keyboard_enter",
+                            "enabled": true,
+                            "repeat_on_hold": false
+                        }
+                    ],
+                    "enabled": true
+                },
+                "button_y": {
                     "actions": [
                         {
                             "action_type": "none",
                             "enabled": false
                         }
-                    ]
-                },
-                "dpad_up": {
-                    "enabled": true,
-                    "actions": [
-                        {
-                            "action_type": "keyboard_up",
-                            "enabled": true,
-                            "repeat_on_hold": true,
-                            "repeat_delay": 500,
-                            "repeat_interval": 100
-                        }
-                    ]
+                    ],
+                    "enabled": false
                 },
                 "dpad_down": {
-                    "enabled": true,
                     "actions": [
                         {
                             "action_type": "keyboard_down",
                             "enabled": true,
-                            "repeat_on_hold": true,
                             "repeat_delay": 500,
-                            "repeat_interval": 100
+                            "repeat_interval": 100,
+                            "repeat_on_hold": true
                         }
-                    ]
+                    ],
+                    "enabled": true
                 },
                 "dpad_left": {
-                    "enabled": true,
                     "actions": [
                         {
                             "action_type": "keyboard_left",
                             "enabled": true,
-                            "repeat_on_hold": true,
                             "repeat_delay": 500,
-                            "repeat_interval": 100
+                            "repeat_interval": 100,
+                            "repeat_on_hold": true
                         }
-                    ]
+                    ],
+                    "enabled": true
                 },
                 "dpad_right": {
-                    "enabled": true,
                     "actions": [
                         {
                             "action_type": "keyboard_right",
                             "enabled": true,
-                            "repeat_on_hold": true,
                             "repeat_delay": 500,
-                            "repeat_interval": 100
+                            "repeat_interval": 100,
+                            "repeat_on_hold": true
                         }
-                    ]
+                    ],
+                    "enabled": true
+                },
+                "dpad_up": {
+                    "actions": [
+                        {
+                            "action_type": "keyboard_up",
+                            "enabled": true,
+                            "repeat_delay": 500,
+                            "repeat_interval": 100,
+                            "repeat_on_hold": true
+                        }
+                    ],
+                    "enabled": true
+                },
+                "guide": {
+                    "actions": [
+                        {
+                            "action_type": "none",
+                            "enabled": false
+                        }
+                    ],
+                    "enabled": false
+                },
+                "left_shoulder": {
+                    "actions": [
+                        {
+                            "action_type": "none",
+                            "enabled": false
+                        }
+                    ],
+                    "enabled": false
+                },
+                "right_shoulder": {
+                    "actions": [
+                        {
+                            "action_type": "mouse_right_click",
+                            "enabled": true
+                        }
+                    ],
+                    "enabled": true
+                },
+                "start": {
+                    "actions": [
+                        {
+                            "action_type": "keyboard_tab",
+                            "enabled": true,
+                            "repeat_on_hold": false
+                        }
+                    ],
+                    "enabled": true
+                }
+            },
+            "left_stick": {
+                "action_type": "cursor",
+                "cursor_action": {
+                    "boosted_sensitivity": 0.3,
+                    "sensitivity": 0.05,
+                    "smoothing": 0.2
+                },
+                "deadzone": 8000,
+                "enabled": true,
+                "scroll_action": {
+                    "horizontal_max_speed": 10,
+                    "horizontal_sensitivity": 0.5,
+                    "vertical_max_speed": 20,
+                    "vertical_sensitivity": 1.0
+                }
+            },
+            "name": "Default Profile",
+            "right_stick": {
+                "action_type": "scroll",
+                "cursor_action": {
+                    "boosted_sensitivity": 0.05,
+                    "sensitivity": 0.3,
+                    "smoothing": 0.2
+                },
+                "deadzone": 8000,
+                "enabled": true,
+                "scroll_action": {
+                    "horizontal_max_speed": 10,
+                    "horizontal_sensitivity": 0.5,
+                    "vertical_max_speed": 20,
+                    "vertical_sensitivity": 1.0
                 }
             },
             "triggers": {
@@ -212,4 +213,4 @@
             }
         }
     }
-} 
+}

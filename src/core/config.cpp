@@ -244,6 +244,48 @@ void Config::createFallbackMappings() {
                                 {"repeat_interval", 100}
                             }
                         }}
+                    }},
+                    {"triggers", {
+                        {"left_trigger", {
+                            {"enabled", false},
+                            {"action_type", "none"},
+                            {"threshold", 8000},
+                            {"button_action", {
+                                {"actions", {
+                                    {
+                                        {"action_type", "none"},
+                                        {"enabled", false}
+                                    }
+                                }},
+                                {"enabled", false}
+                            }},
+                            {"scroll_action", {
+                                {"vertical_sensitivity", 1.0},
+                                {"horizontal_sensitivity", 0.3},
+                                {"vertical_max_speed", 40},
+                                {"horizontal_max_speed", 15}
+                            }}
+                        }},
+                        {"right_trigger", {
+                            {"enabled", false},
+                            {"action_type", "none"},
+                            {"threshold", 8000},
+                            {"button_action", {
+                                {"actions", {
+                                    {
+                                        {"action_type", "none"},
+                                        {"enabled", false}
+                                    }
+                                }},
+                                {"enabled", false}
+                            }},
+                            {"scroll_action", {
+                                {"vertical_sensitivity", 1.0},
+                                {"horizontal_sensitivity", 0.3},
+                                {"vertical_max_speed", 40},
+                                {"horizontal_max_speed", 15}
+                            }}
+                        }}
                     }}
                 }}
             }}

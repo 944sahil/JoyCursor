@@ -83,4 +83,22 @@ struct ButtonAction {
 struct ButtonMapping {
     std::vector<ButtonAction> actions;
     bool enabled = false;
+};
+
+// Enum for different trigger action types
+enum class TriggerActionType {
+    NONE,
+    BUTTON,
+    SCROLL
+};
+
+// Represents trigger mapping settings (left or right trigger)
+struct TriggerMapping {
+    bool enabled = false;
+    TriggerActionType action_type = TriggerActionType::NONE;
+    int threshold = 8000; // For button press detection
+
+    // Action-specific settings
+    ButtonMapping button_action; // Used if action_type is BUTTON
+    ScrollAction scroll_action; // Used if action_type is SCROLL
 }; 

@@ -113,6 +113,7 @@ public:
             }
         }
         handleMouseMovement();
+        handleTriggerButtons();
         handleRepeatTiming();
     }
 
@@ -388,6 +389,42 @@ private:
                 float current_x, current_y;
                 SDL_GetGlobalMouseState(&current_x, &current_y);
                 SDL_WarpMouseGlobal(current_x + total_cursor_x, current_y + total_cursor_y);
+            }
+        }
+    }
+
+    void handleTriggerButtons() {
+        // Track previous pressed state for each controller and trigger
+        static std::unordered_map<int, std::unordered_map<std::string, bool>> prev_trigger_pressed;
+        for (const auto& [instance_id, gamepad] : m_active_controllers) {
+            SDL_Joystick* joystick = SDL_GetGamepadJoystick(gamepad);
+            SDL_GUID guid = SDL_GetJoystickGUID(joystick);
+            std::string guid_str = guid_to_string(guid);
+
+            struct TriggerInfo {
+                SDL_GamepadAxis axis;
+                const char* name;
+            } triggers[2] = {
+                {SDL_GAMEPAD_AXIS_LEFT_TRIGGER, "left_trigger"},
+                {SDL_GAMEPAD_AXIS_RIGHT_TRIGGER, "right_trigger"}
+            };
+
+            for (const auto& trig : triggers) {
+                TriggerMapping mapping = m_mapping_manager.getTriggerMapping(guid_str, trig.name);
+                if (!mapping.enabled || mapping.action_type != TriggerActionType::BUTTON) continue;
+
+                Sint16 value = SDL_GetGamepadAxis(gamepad, trig.axis);
+                bool pressed = value >= mapping.threshold;
+                bool was_pressed = prev_trigger_pressed[instance_id][trig.name];
+
+                if (pressed && !was_pressed) {
+                    // Just pressed
+                    executeButtonActionsDown(mapping.button_action, instance_id, trig.name);
+                } else if (!pressed && was_pressed) {
+                    // Just released
+                    executeButtonActionsUp(mapping.button_action, instance_id, trig.name);
+                }
+                prev_trigger_pressed[instance_id][trig.name] = pressed;
             }
         }
     }

@@ -118,6 +118,109 @@ StickMapping MappingManager::getRightStick(const std::string& guid) {
     return mapping;
 }
 
+ButtonAction MappingManager::parseButtonAction(const nlohmann::json& action_json) {
+    ButtonAction action;
+    action.enabled = action_json.value("enabled", false);
+    std::string action_type_str = action_json.value("action_type", "none");
+    if (action_type_str == "mouse_left_click") {
+        action.click_type = MouseClickType::LEFT_CLICK;
+        action.key_type = KeyboardKeyType::NONE;
+    } else if (action_type_str == "mouse_right_click") {
+        action.click_type = MouseClickType::RIGHT_CLICK;
+        action.key_type = KeyboardKeyType::NONE;
+    } else if (action_type_str == "mouse_middle_click") {
+        action.click_type = MouseClickType::MIDDLE_CLICK;
+        action.key_type = KeyboardKeyType::NONE;
+    } else if (action_type_str == "keyboard_space") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::SPACE;
+    } else if (action_type_str == "keyboard_escape") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::ESCAPE;
+    } else if (action_type_str == "keyboard_enter") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::ENTER;
+    } else if (action_type_str == "keyboard_tab") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::TAB;
+    } else if (action_type_str == "keyboard_alt") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::ALT;
+    } else if (action_type_str == "keyboard_ctrl") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::CTRL;
+    } else if (action_type_str == "keyboard_shift") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::SHIFT;
+    } else if (action_type_str == "keyboard_up") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::UP;
+    } else if (action_type_str == "keyboard_down") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::DOWN;
+    } else if (action_type_str == "keyboard_left") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::LEFT;
+    } else if (action_type_str == "keyboard_right") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::RIGHT;
+    } else if (action_type_str == "keyboard_f1") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::F1;
+    } else if (action_type_str == "keyboard_f2") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::F2;
+    } else if (action_type_str == "keyboard_f3") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::F3;
+    } else if (action_type_str == "keyboard_f4") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::F4;
+    } else if (action_type_str == "keyboard_f5") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::F5;
+    } else if (action_type_str == "keyboard_f6") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::F6;
+    } else if (action_type_str == "keyboard_f7") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::F7;
+    } else if (action_type_str == "keyboard_f8") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::F8;
+    } else if (action_type_str == "keyboard_f9") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::F9;
+    } else if (action_type_str == "keyboard_f10") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::F10;
+    } else if (action_type_str == "keyboard_f11") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::F11;
+    } else if (action_type_str == "keyboard_f12") {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::F12;
+    } else {
+        action.click_type = MouseClickType::NONE;
+        action.key_type = KeyboardKeyType::NONE;
+    }
+    action.repeat_on_hold = action_json.value("repeat_on_hold", action.repeat_on_hold);
+    action.repeat_delay = action_json.value("repeat_delay", action.repeat_delay);
+    action.repeat_interval = action_json.value("repeat_interval", action.repeat_interval);
+    return action;
+}
+
+ButtonMapping MappingManager::parseButtonMapping(const nlohmann::json& button_config) {
+    ButtonMapping mapping;
+    mapping.enabled = button_config.value("enabled", false);
+    if (button_config.contains("actions") && button_config["actions"].is_array()) {
+        for (const auto& action_json : button_config["actions"]) {
+            mapping.actions.push_back(parseButtonAction(action_json));
+        }
+    }
+    return mapping;
+}
+
 ButtonMapping MappingManager::getButtonMapping(const std::string& guid, const std::string& button_name) {
     // Return cached mapping if already parsed
     if (m_parsed_button_mappings.count(guid) && m_parsed_button_mappings[guid].count(button_name)) {
@@ -129,113 +232,10 @@ ButtonMapping MappingManager::getButtonMapping(const std::string& guid, const st
         createMappingFromDefault(guid);
     }
 
-    // Parse the button mapping from JSON
     ButtonMapping mapping;
     const auto& buttons_config = m_mappings_json["mappings"][guid]["buttons"];
-    
     if (buttons_config.contains(button_name)) {
-        const auto& button_config = buttons_config[button_name];
-        mapping.enabled = button_config.value("enabled", false);
-        
-        // Parse actions array
-        if (button_config.contains("actions") && button_config["actions"].is_array()) {
-            for (const auto& action_json : button_config["actions"]) {
-                ButtonAction action;
-                action.enabled = action_json.value("enabled", false);
-                
-                // Parse action_type string to click_type and key_type
-                std::string action_type_str = action_json.value("action_type", "none");
-                if (action_type_str == "mouse_left_click") {
-                    action.click_type = MouseClickType::LEFT_CLICK;
-                    action.key_type = KeyboardKeyType::NONE;
-                } else if (action_type_str == "mouse_right_click") {
-                    action.click_type = MouseClickType::RIGHT_CLICK;
-                    action.key_type = KeyboardKeyType::NONE;
-                } else if (action_type_str == "mouse_middle_click") {
-                    action.click_type = MouseClickType::MIDDLE_CLICK;
-                    action.key_type = KeyboardKeyType::NONE;
-                } else if (action_type_str == "keyboard_space") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::SPACE;
-                } else if (action_type_str == "keyboard_escape") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::ESCAPE;
-                } else if (action_type_str == "keyboard_enter") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::ENTER;
-                } else if (action_type_str == "keyboard_tab") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::TAB;
-                } else if (action_type_str == "keyboard_alt") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::ALT;
-                } else if (action_type_str == "keyboard_ctrl") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::CTRL;
-                } else if (action_type_str == "keyboard_shift") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::SHIFT;
-                } else if (action_type_str == "keyboard_up") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::UP;
-                } else if (action_type_str == "keyboard_down") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::DOWN;
-                } else if (action_type_str == "keyboard_left") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::LEFT;
-                } else if (action_type_str == "keyboard_right") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::RIGHT;
-                } else if (action_type_str == "keyboard_f1") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::F1;
-                } else if (action_type_str == "keyboard_f2") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::F2;
-                } else if (action_type_str == "keyboard_f3") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::F3;
-                } else if (action_type_str == "keyboard_f4") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::F4;
-                } else if (action_type_str == "keyboard_f5") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::F5;
-                } else if (action_type_str == "keyboard_f6") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::F6;
-                } else if (action_type_str == "keyboard_f7") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::F7;
-                } else if (action_type_str == "keyboard_f8") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::F8;
-                } else if (action_type_str == "keyboard_f9") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::F9;
-                } else if (action_type_str == "keyboard_f10") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::F10;
-                } else if (action_type_str == "keyboard_f11") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::F11;
-                } else if (action_type_str == "keyboard_f12") {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::F12;
-                } else {
-                    action.click_type = MouseClickType::NONE;
-                    action.key_type = KeyboardKeyType::NONE;
-                }
-                
-                // Parse keyboard-specific settings
-                action.repeat_on_hold = action_json.value("repeat_on_hold", action.repeat_on_hold);
-                action.repeat_delay = action_json.value("repeat_delay", action.repeat_delay);
-                action.repeat_interval = action_json.value("repeat_interval", action.repeat_interval);
-                
-                mapping.actions.push_back(action);
-            }
-        }
+        mapping = parseButtonMapping(buttons_config[button_name]);
     } else {
         // Button not found, create default disabled mapping
         mapping.enabled = false;
@@ -245,7 +245,6 @@ ButtonMapping MappingManager::getButtonMapping(const std::string& guid, const st
         default_action.enabled = false;
         mapping.actions.push_back(default_action);
     }
-
     // Cache and return
     m_parsed_button_mappings[guid][button_name] = mapping;
     return mapping;
@@ -280,4 +279,41 @@ void MappingManager::createMappingFromDefault(const std::string& guid) {
     } else {
         logError("Could not create new mapping, 'default' profile is missing in mappings.json!");
     }
+}
+
+TriggerMapping MappingManager::getTriggerMapping(const std::string& guid, const std::string& trigger_name) {
+    if (m_parsed_trigger_mappings.count(guid) && m_parsed_trigger_mappings[guid].count(trigger_name)) {
+        return m_parsed_trigger_mappings[guid][trigger_name];
+    }
+    if (!m_mappings_json["mappings"].contains(guid)) {
+        createMappingFromDefault(guid);
+    }
+    TriggerMapping mapping;
+    const auto& triggers_config = m_mappings_json["mappings"][guid]["triggers"];
+    if (triggers_config.contains(trigger_name)) {
+        const auto& trigger_config = triggers_config[trigger_name];
+        mapping.enabled = trigger_config.value("enabled", false);
+        std::string action_type_str = trigger_config.value("action_type", "none");
+        if (action_type_str == "button") {
+            mapping.action_type = TriggerActionType::BUTTON;
+        } else if (action_type_str == "scroll") {
+            mapping.action_type = TriggerActionType::SCROLL;
+        } else {
+            mapping.action_type = TriggerActionType::NONE;
+        }
+        mapping.threshold = trigger_config.value("threshold", mapping.threshold);
+        // Parse button_action using helper
+        if (trigger_config.contains("button_action")) {
+            mapping.button_action = parseButtonMapping(trigger_config["button_action"]);
+        }
+        // (Skip scroll_action for now)
+    } else {
+        mapping.enabled = false;
+        mapping.action_type = TriggerActionType::NONE;
+        mapping.threshold = 8000;
+        mapping.button_action.enabled = false;
+        mapping.button_action.actions.clear();
+    }
+    m_parsed_trigger_mappings[guid][trigger_name] = mapping;
+    return mapping;
 } 
