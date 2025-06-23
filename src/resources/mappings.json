@@ -170,9 +170,10 @@
             },
             "triggers": {
                 "left_trigger": {
-                    "enabled": false,
-                    "action_type": "none",
+                    "enabled": true,
+                    "action_type": "scroll",
                     "threshold": 8000,
+                    "scroll_direction": "up",
                     "button_action": {
                         "actions": [
                             {
@@ -182,17 +183,16 @@
                         ],
                         "enabled": false
                     },
-                    "scroll_action": {
+                    "trigger_scroll_action": {
                         "vertical_sensitivity": 1.0,
-                        "horizontal_sensitivity": 0.3,
-                        "vertical_max_speed": 40,
-                        "horizontal_max_speed": 15
+                        "vertical_max_speed": 40
                     }
                 },
                 "right_trigger": {
-                    "enabled": false,
-                    "action_type": "none",
+                    "enabled": true,
+                    "action_type": "scroll",
                     "threshold": 8000,
+                    "scroll_direction": "down",
                     "button_action": {
                         "actions": [
                             {
@@ -202,11 +202,9 @@
                         ],
                         "enabled": false
                     },
-                    "scroll_action": {
+                    "trigger_scroll_action": {
                         "vertical_sensitivity": 1.0,
-                        "horizontal_sensitivity": 0.3,
-                        "vertical_max_speed": 40,
-                        "horizontal_max_speed": 15
+                        "vertical_max_speed": 40
                     }
                 }
             }

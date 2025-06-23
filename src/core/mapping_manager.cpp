@@ -298,6 +298,13 @@ TriggerMapping MappingManager::getTriggerMapping(const std::string& guid, const 
             mapping.action_type = TriggerActionType::BUTTON;
         } else if (action_type_str == "scroll") {
             mapping.action_type = TriggerActionType::SCROLL;
+            mapping.scroll_direction = trigger_config.value("scroll_direction", "up");
+            // Parse trigger_scroll_action
+            if (trigger_config.contains("trigger_scroll_action")) {
+                const auto& scroll_config = trigger_config["trigger_scroll_action"];
+                mapping.trigger_scroll_action.vertical_sensitivity = scroll_config.value("vertical_sensitivity", mapping.trigger_scroll_action.vertical_sensitivity);
+                mapping.trigger_scroll_action.vertical_max_speed = scroll_config.value("vertical_max_speed", mapping.trigger_scroll_action.vertical_max_speed);
+            }
         } else {
             mapping.action_type = TriggerActionType::NONE;
         }
@@ -306,13 +313,14 @@ TriggerMapping MappingManager::getTriggerMapping(const std::string& guid, const 
         if (trigger_config.contains("button_action")) {
             mapping.button_action = parseButtonMapping(trigger_config["button_action"]);
         }
-        // (Skip scroll_action for now)
     } else {
         mapping.enabled = false;
         mapping.action_type = TriggerActionType::NONE;
         mapping.threshold = 8000;
         mapping.button_action.enabled = false;
         mapping.button_action.actions.clear();
+        mapping.scroll_direction = "up";
+        mapping.trigger_scroll_action = TriggerScrollAction();
     }
     m_parsed_trigger_mappings[guid][trigger_name] = mapping;
     return mapping;

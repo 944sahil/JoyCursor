@@ -28,6 +28,7 @@ public:
     static void executeButtonActions(const ButtonMapping& mapping);
 
     // Gets the trigger mapping for a given controller GUID and trigger (e.g., "left_trigger", "right_trigger").
+    // Now also parses scroll_direction for scroll actions.
     TriggerMapping getTriggerMapping(const std::string& guid, const std::string& trigger_name);
 
 private:

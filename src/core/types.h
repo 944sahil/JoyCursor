@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 
 // Enum for different stick action types
 enum class StickActionType {
@@ -92,6 +93,12 @@ enum class TriggerActionType {
     SCROLL
 };
 
+// Represents scroll action settings for triggers (independent from sticks)
+struct TriggerScrollAction {
+    float vertical_sensitivity = 1.0f;
+    int vertical_max_speed = 40;
+};
+
 // Represents trigger mapping settings (left or right trigger)
 struct TriggerMapping {
     bool enabled = false;
@@ -100,5 +107,6 @@ struct TriggerMapping {
 
     // Action-specific settings
     ButtonMapping button_action; // Used if action_type is BUTTON
-    ScrollAction scroll_action; // Used if action_type is SCROLL
+    TriggerScrollAction trigger_scroll_action; // Used if action_type is SCROLL
+    std::string scroll_direction; // "up" or "down" if action_type is SCROLL
 }; 

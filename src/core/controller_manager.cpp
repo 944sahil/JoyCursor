@@ -114,6 +114,7 @@ public:
         }
         handleMouseMovement();
         handleTriggerButtons();
+        handleTriggerScroll();
         handleRepeatTiming();
     }
 
@@ -168,11 +169,9 @@ private:
             "left_shoulder", "right_shoulder", "start", "back", "guide",
             "dpad_up", "dpad_down", "dpad_left", "dpad_right"
         };
-        
         for (const auto& button_name : button_names) {
             ButtonMapping mapping = m_mapping_manager.getButtonMapping(guid_str, button_name);
             if (!mapping.enabled) continue;
-            
             std::vector<std::string> enabled_actions;
             for (const auto& action : mapping.actions) {
                 if (action.enabled) {
@@ -188,7 +187,6 @@ private:
                         // Keyboard key type
                         switch (action.key_type) {
                             case KeyboardKeyType::ESCAPE: enabled_actions.push_back("keyboard_escape"); break;
-                            case KeyboardKeyType::ENTER: enabled_actions.push_back("keyboard_enter"); break;
                             case KeyboardKeyType::TAB: enabled_actions.push_back("keyboard_tab"); break;
                             case KeyboardKeyType::UP: enabled_actions.push_back("keyboard_up"); break;
                             case KeyboardKeyType::DOWN: enabled_actions.push_back("keyboard_down"); break;
@@ -216,12 +214,18 @@ private:
                 }
             }
             if (!enabled_actions.empty()) {
-                std::string actions_str;
-                for (size_t i = 0; i < enabled_actions.size(); ++i) {
-                    actions_str += enabled_actions[i];
-                    if (i + 1 < enabled_actions.size()) actions_str += ", ";
-                }
-                logInfo(("  " + button_name + " => [" + actions_str + "]").c_str());
+                logInfo((button_name + ": " + [&](){ std::string s; for (const auto& a : enabled_actions) { if (!s.empty()) s += ", "; s += a; } return s; }()).c_str());
+            }
+        }
+        // Log trigger mappings for this controller
+        std::vector<std::string> trigger_names = {"left_trigger", "right_trigger"};
+        for (const auto& trigger_name : trigger_names) {
+            TriggerMapping trig_mapping = m_mapping_manager.getTriggerMapping(guid_str, trigger_name);
+            if (!trig_mapping.enabled) continue;
+            if (trig_mapping.action_type == TriggerActionType::SCROLL) {
+                // logInfo((trigger_name + std::string(": scroll ") + trig_mapping.scroll_direction).c_str());
+            } else if (trig_mapping.action_type == TriggerActionType::BUTTON) {
+                // logInfo((trigger_name + std::string(": button action")).c_str());
             }
         }
         
@@ -425,6 +429,74 @@ private:
                     executeButtonActionsUp(mapping.button_action, instance_id, trig.name);
                 }
                 prev_trigger_pressed[instance_id][trig.name] = pressed;
+            }
+        }
+    }
+
+    void handleTriggerScroll() {
+        static std::unordered_map<int, std::unordered_map<std::string, Uint32>> trigger_press_times;
+        static Uint32 last_scroll_time = 0;
+        Uint32 now = SDL_GetTicks();
+        const Uint32 SCROLL_INTERVAL_MS = 10;
+        const float BASE_SCROLL_PER_FRAME = 2.0f;
+        const float MAX_SCROLL_PER_FRAME = 40.0f;
+        const float MAX_ACCEL_TIME = 2000.0f; // ms
+
+        if (now - last_scroll_time < SCROLL_INTERVAL_MS) return;
+        last_scroll_time = now;
+
+        for (const auto& [instance_id, gamepad] : m_active_controllers) {
+            SDL_Joystick* joystick = SDL_GetGamepadJoystick(gamepad);
+            SDL_GUID guid = SDL_GetJoystickGUID(joystick);
+            std::string guid_str = guid_to_string(guid);
+
+            struct TriggerInfo {
+                SDL_GamepadAxis axis;
+                const char* name;
+                int direction; // +1 for up, -1 for down
+            } triggers[2] = {
+                {SDL_GAMEPAD_AXIS_LEFT_TRIGGER, "left_trigger", +1},
+                {SDL_GAMEPAD_AXIS_RIGHT_TRIGGER, "right_trigger", -1}
+            };
+
+            for (const auto& trig : triggers) {
+                TriggerMapping mapping = m_mapping_manager.getTriggerMapping(guid_str, trig.name);
+                if (!mapping.enabled) continue;
+
+                if (mapping.action_type == TriggerActionType::SCROLL) {
+                    // logInfo((std::string("Trigger: ") + trig.name + " mapped to scroll " + mapping.scroll_direction).c_str());
+                } else if (mapping.action_type == TriggerActionType::BUTTON) {
+                    // logInfo((std::string("Trigger: ") + trig.name + " mapped to button action").c_str());
+                }
+
+                Sint16 value = SDL_GetGamepadAxis(gamepad, trig.axis);
+                if (value < mapping.threshold)
+                {
+                    trigger_press_times[instance_id][trig.name] = 0;
+                    continue;
+                }
+
+                // Track held time
+                Uint32& press_time = trigger_press_times[instance_id][trig.name];
+                if (press_time == 0) press_time = now;
+                float held_time = float(now - press_time);
+                float accel = std::min(1.0f, held_time / MAX_ACCEL_TIME);
+                float factor = accel * accel; // quadratic ramp-up
+
+                // Normalize from threshold to max
+                float norm = (value - mapping.threshold) / float(32767 - mapping.threshold);
+                norm = std::clamp(norm, 0.0f, 1.0f);
+
+                float base = mapping.trigger_scroll_action.vertical_sensitivity * BASE_SCROLL_PER_FRAME;
+                float max = mapping.trigger_scroll_action.vertical_max_speed > 0 ? mapping.trigger_scroll_action.vertical_max_speed : MAX_SCROLL_PER_FRAME;
+                int scroll_amount = static_cast<int>(base * norm * factor * max);
+                if (scroll_amount == 0) continue;
+
+                if (mapping.scroll_direction == "up") {
+                    platform_simulate_scroll_vertical(scroll_amount);
+                } else if (mapping.scroll_direction == "down") {
+                    platform_simulate_scroll_vertical(-scroll_amount);
+                }
             }
         }
     }

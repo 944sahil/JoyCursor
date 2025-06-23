@@ -244,47 +244,45 @@ void Config::createFallbackMappings() {
                                 {"repeat_interval", 100}
                             }
                         }}
-                    }},
-                    {"triggers", {
-                        {"left_trigger", {
-                            {"enabled", false},
-                            {"action_type", "none"},
-                            {"threshold", 8000},
-                            {"button_action", {
-                                {"actions", {
-                                    {
-                                        {"action_type", "none"},
-                                        {"enabled", false}
-                                    }
-                                }},
-                                {"enabled", false}
+                    }}
+                }},
+                {"triggers", {
+                    {"left_trigger", {
+                        {"enabled", true},
+                        {"action_type", "scroll"},
+                        {"threshold", 8000},
+                        {"scroll_direction", "up"},
+                        {"button_action", {
+                            {"actions", {
+                                {
+                                    {"action_type", "none"},
+                                    {"enabled", false}
+                                }
                             }},
-                            {"scroll_action", {
-                                {"vertical_sensitivity", 1.0},
-                                {"horizontal_sensitivity", 0.3},
-                                {"vertical_max_speed", 40},
-                                {"horizontal_max_speed", 15}
-                            }}
+                            {"enabled", false}
                         }},
-                        {"right_trigger", {
-                            {"enabled", false},
-                            {"action_type", "none"},
-                            {"threshold", 8000},
-                            {"button_action", {
-                                {"actions", {
-                                    {
-                                        {"action_type", "none"},
-                                        {"enabled", false}
-                                    }
-                                }},
-                                {"enabled", false}
+                        {"trigger_scroll_action", {
+                            {"vertical_sensitivity", 1.0},
+                            {"vertical_max_speed", 40}
+                        }}
+                    }},
+                    {"right_trigger", {
+                        {"enabled", true},
+                        {"action_type", "scroll"},
+                        {"threshold", 8000},
+                        {"scroll_direction", "down"},
+                        {"button_action", {
+                            {"actions", {
+                                {
+                                    {"action_type", "none"},
+                                    {"enabled", false}
+                                }
                             }},
-                            {"scroll_action", {
-                                {"vertical_sensitivity", 1.0},
-                                {"horizontal_sensitivity", 0.3},
-                                {"vertical_max_speed", 40},
-                                {"horizontal_max_speed", 15}
-                            }}
+                            {"enabled", false}
+                        }},
+                        {"trigger_scroll_action", {
+                            {"vertical_sensitivity", 1.0},
+                            {"vertical_max_speed", 40}
                         }}
                     }}
                 }}
