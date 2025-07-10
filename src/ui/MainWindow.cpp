@@ -1,6 +1,11 @@
 #include "MainWindow.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QSpacerItem>
+#include <QSizePolicy>
+#include <QIcon>
+#include <QApplication>
+#include <QDebug>
 #include <QPixmap>
 #include <QFile>
 #include <QPainter>
@@ -88,6 +93,37 @@ MainWindow::MainWindow(QWidget* parent)
     manageButton->setStyleSheet("QPushButton { color: #1565c0; background: transparent; border: none; text-align: left; font-size: 15px; padding: 0; } QPushButton:hover { text-decoration: underline; }");
     manageButton->setCursor(Qt::PointingHandCursor);
     mainLayout->addWidget(manageButton, 0, Qt::AlignLeft);
+
+    // --- Worker thread setup ---
+    workerThread = new QThread(this);
+    controllerWorker = new ControllerWorker();
+    controllerWorker->moveToThread(workerThread);
+    connect(workerThread, &QThread::finished, controllerWorker, &QObject::deleteLater);
+    connect(this, &QMainWindow::destroyed, workerThread, &QThread::quit);
+    connect(controllerWorker, &ControllerWorker::controllerConnected, this, &MainWindow::onControllerConnected);
+    connect(controllerWorker, &ControllerWorker::controllerDisconnected, this, &MainWindow::onControllerDisconnected);
+    workerThread->start();
+    QMetaObject::invokeMethod(controllerWorker, "start", Qt::QueuedConnection);
 }
 
-MainWindow::~MainWindow() = default; 
+MainWindow::~MainWindow() {
+    if (controllerWorker) {
+        QMetaObject::invokeMethod(controllerWorker, "stop", Qt::BlockingQueuedConnection);
+    }
+    if (workerThread) {
+        workerThread->quit();
+        workerThread->wait();
+    }
+}
+
+void MainWindow::onControllerConnected(const QString& name) {
+    controllerNameLabel->setText(name);
+    statusLabel->setText("Connected");
+    if (profileStatusDot) static_cast<DotWidget*>(profileStatusDot)->setColor(QColor("#21c521")); // Green
+}
+
+void MainWindow::onControllerDisconnected() {
+    controllerNameLabel->setText("Controller");
+    statusLabel->setText("Disconnected");
+    if (profileStatusDot) static_cast<DotWidget*>(profileStatusDot)->setColor(QColor("#FF3B30")); // Red
+} 

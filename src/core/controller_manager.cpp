@@ -118,6 +118,19 @@ public:
         handleRepeatTiming();
     }
 
+    bool hasActiveController() const override {
+        return !m_active_controllers.empty();
+    }
+    std::string getActiveControllerName() const override {
+        if (!m_active_controllers.empty()) {
+            auto it = m_active_controllers.begin();
+            SDL_Gamepad* gamepad = it->second;
+            const char* name = SDL_GetGamepadName(gamepad);
+            return name ? std::string(name) : std::string();
+        }
+        return std::string();
+    }
+
 private:
     // Apply cubic scroll curve for natural feel
     float applyScrollCurve(float input) const {

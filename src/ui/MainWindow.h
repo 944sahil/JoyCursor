@@ -5,19 +5,24 @@
 #include <QFrame>
 #include <QWidget>
 #include <QPainter>
+#include <QThread>
+#include "../workers/ControllerWorker.h"
 
 // Custom widget for a perfect green dot
 class DotWidget : public QWidget {
 public:
-    explicit DotWidget(QWidget* parent = nullptr) : QWidget(parent) {}
+    explicit DotWidget(QWidget* parent = nullptr) : QWidget(parent), m_color("#FF3B30") {}
+    void setColor(const QColor& color) { m_color = color; update(); }
 protected:
     void paintEvent(QPaintEvent*) override {
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing);
-        p.setBrush(QColor("#FF3B30")); // Red dot for disconnected
+        p.setBrush(m_color);
         p.setPen(Qt::NoPen);
         p.drawEllipse(rect());
     }
+private:
+    QColor m_color;
 };
 
 class MainWindow : public QMainWindow {
@@ -35,4 +40,12 @@ private:
     QLabel* profileNameLabel;
     QPushButton* configureButton;
     QPushButton* manageButton;
+
+private slots:
+    void onControllerConnected(const QString& name);
+    void onControllerDisconnected();
+
+private:
+    QThread* workerThread;
+    ControllerWorker* controllerWorker;
 }; 

@@ -23,7 +23,7 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 
 # Add source files
 file(GLOB_RECURSE CORE_SOURCES "src/core/*.cpp" "src/platform/*.cpp" "src/utils/*.cpp")
-file(GLOB UI_SOURCES "src/ui/*.cpp" "src/ui/*.h")
+file(GLOB UI_SOURCES "src/ui/*.cpp" "src/ui/*.h" "src/workers/ControllerWorker.cpp" "src/workers/ControllerWorker.h")
 list(REMOVE_ITEM UI_SOURCES ${CMAKE_SOURCE_DIR}/src/ui/ResourceTest.cpp)
 
 # Add Qt resource file
@@ -32,6 +32,9 @@ qt6_add_resources(GENERATED_RESOURCES src/resources/resources.qrc)
 # Main Qt UI executable
 add_executable(JoyCursor src/main.cpp ${CORE_SOURCES} ${UI_SOURCES} ${GENERATED_RESOURCES})
 target_link_libraries(JoyCursor PRIVATE SDL3::SDL3 Qt6::Widgets)
+if (WIN32)
+    set_target_properties(JoyCursor PROPERTIES WIN32_EXECUTABLE TRUE)
+endif()
 
 # CLI core executable
 add_executable(JoyCursorCore src/core_main.cpp ${CORE_SOURCES})
