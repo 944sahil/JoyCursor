@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="gamepad.svg">icons/gamepad.svg</file>
+        <file alias="gamepad.png">icons/gamepad.png</file>
+    </qresource>
+</RCC>
