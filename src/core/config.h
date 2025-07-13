@@ -5,7 +5,7 @@
 
 #include <nlohmann/json.hpp>
 #include <string>
-#include <set>
+#include <map>
 
 class Config {
 public:
@@ -14,8 +14,8 @@ public:
     void saveControllers();
     void saveMappings();
 
-    const std::set<std::string>& getKnownControllerGuids() const;
-    void addControllerGuid(const std::string& guid);
+    const std::map<std::string, std::string>& getKnownControllers() const;
+    void addController(const std::string& guid, const std::string& name);
 
     const nlohmann::json& getMappingsJson() const;
     nlohmann::json& getMappingsJson();
@@ -28,5 +28,5 @@ private:
     void createFallbackMappings();
 
     nlohmann::json m_mappings;
-    std::set<std::string> m_known_controller_guids;
+    std::map<std::string, std::string> m_known_controllers; // guid -> name
 }; 

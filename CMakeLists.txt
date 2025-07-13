@@ -23,7 +23,7 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 
 # Add source files
 file(GLOB_RECURSE CORE_SOURCES "src/core/*.cpp" "src/platform/*.cpp" "src/utils/*.cpp")
-file(GLOB UI_SOURCES "src/ui/*.cpp" "src/ui/*.h" "src/workers/ControllerWorker.cpp" "src/workers/ControllerWorker.h")
+file(GLOB UI_SOURCES "src/ui/*.cpp" "src/ui/*.h" "src/workers/CoreWorker.cpp" "src/workers/CoreWorker.h")
 list(REMOVE_ITEM UI_SOURCES ${CMAKE_SOURCE_DIR}/src/ui/ResourceTest.cpp)
 
 # Add Qt resource file

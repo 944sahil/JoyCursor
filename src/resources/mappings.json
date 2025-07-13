@@ -6,8 +6,8 @@
                 "action_type": "cursor",
                 "deadzone": 8000,
                 "cursor_action": {
-                    "sensitivity": 0.05,
-                    "boosted_sensitivity": 0.3,
+                    "sensitivity": 0.15,
+                    "boosted_sensitivity": 0.6,
                     "smoothing": 0.2
                 },
                 "scroll_action": {
@@ -22,8 +22,8 @@
                 "action_type": "scroll",
                 "deadzone": 8000,
                 "cursor_action": {
-                    "sensitivity": 0.3,
-                    "boosted_sensitivity": 0.05,
+                    "sensitivity": 0.4,
+                    "boosted_sensitivity": 0.8,
                     "smoothing": 0.2
                 },
                 "scroll_action": {

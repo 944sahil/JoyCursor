@@ -33,28 +33,6 @@ namespace {
 const char* CONTROLLERS_JSON = "controllers.json";
 const char* MAPPINGS_JSON = "mappings.json";
 
-std::set<std::string> load_known_guids() {
-    std::set<std::string> guids;
-    std::ifstream in(CONTROLLERS_JSON);
-    if (in) {
-        json j;
-        in >> j;
-        if (j.contains("controllers") && j["controllers"].is_array()) {
-            for (const auto& guid : j["controllers"]) {
-                guids.insert(guid.get<std::string>());
-            }
-        }
-    }
-    return guids;
-}
-
-void save_known_guids(const std::set<std::string>& guids) {
-    json j;
-    j["controllers"] = guids;
-    std::ofstream out(CONTROLLERS_JSON);
-    out << j.dump(4);
-}
-
 std::string guid_to_string(const SDL_GUID& guid) {
     char buf[64] = {0};
     SDL_GUIDToString(guid, buf, sizeof(buf));
@@ -92,7 +70,7 @@ public:
 
     void detectControllers() override {} // No-op for now
 
-    void pollEvents() override {
+    void pollEvents(float deltaTime = 0.005f) override {
         SDL_UpdateGamepads();
 
         SDL_Event event;
@@ -112,7 +90,7 @@ public:
                     break;
             }
         }
-        handleMouseMovement();
+        handleMouseMovement(deltaTime);
         handleTriggerButtons();
         handleTriggerScroll();
         handleRepeatTiming();
@@ -129,6 +107,15 @@ public:
             return name ? std::string(name) : std::string();
         }
         return std::string();
+    }
+
+    // Callback setters for core integration
+    void setControllerConnectedCallback(ControllerConnectedCallback callback) override {
+        m_controllerConnectedCallback = callback;
+    }
+    
+    void setControllerDisconnectedCallback(ControllerDisconnectedCallback callback) override {
+        m_controllerDisconnectedCallback = callback;
     }
 
 private:
@@ -244,22 +231,39 @@ private:
         
         m_config.saveMappings();
 
-        if (m_config.getKnownControllerGuids().count(guid_str)) {
+        if (m_config.getKnownControllers().count(guid_str)) {
             logInfo(("Controller connected (known): " + std::string(name) + " [" + guid_str + "]").c_str());
         } else {
             logInfo(("Controller connected (new): " + std::string(name) + " [" + guid_str + "]").c_str());
-            m_config.addControllerGuid(guid_str);
+            m_config.addController(guid_str, name ? std::string(name) : "Unknown Controller");
+            m_config.saveControllers(); // Save immediately when new controller is added
+        }
+        
+        // Notify core about controller connection
+        if (m_controllerConnectedCallback) {
+            m_controllerConnectedCallback(guid_str, name ? std::string(name) : "Unknown Controller");
         }
     }
 
     void onGamepadRemoved(const SDL_GamepadDeviceEvent& event) {
         if (m_active_controllers.count(event.which)) {
             const char* name = SDL_GetGamepadName(m_active_controllers[event.which]);
+            
+            // Get the GUID before closing the gamepad
+            SDL_Joystick* joystick = SDL_GetGamepadJoystick(m_active_controllers[event.which]);
+            SDL_GUID guid = SDL_GetJoystickGUID(joystick);
+            std::string guid_str = guid_to_string(guid);
+            
             logInfo(("Controller disconnected: " + std::string(name)).c_str());
             SDL_CloseGamepad(m_active_controllers[event.which]);
             m_active_controllers.erase(event.which);
             m_left_stick_mappings.erase(event.which);
             m_right_stick_mappings.erase(event.which);
+            
+            // Notify core about controller disconnection
+            if (m_controllerDisconnectedCallback) {
+                m_controllerDisconnectedCallback(guid_str);
+            }
         }
     }
 
@@ -267,7 +271,7 @@ private:
         // Unused - polling instead
     }
 
-    void handleMouseMovement() {
+    void handleMouseMovement(float deltaTime) {
         for (auto const& [instance_id, gamepad] : m_active_controllers) {
             float total_cursor_x = 0.0f;
             float total_cursor_y = 0.0f;
@@ -293,16 +297,18 @@ private:
                         effective_sensitivity = left_mapping.cursor_action.boosted_sensitivity;
                     }
 
-                    float cursor_mx = left_mx * effective_sensitivity;
-                    float cursor_my = left_my * effective_sensitivity;
+                    // Calculate movement per second (time-based)
+                    float cursor_mx = left_mx * effective_sensitivity * 60.0f; // 60 pixels per second at full input
+                    float cursor_my = left_my * effective_sensitivity * 60.0f;
 
-                    // Smoothing logic
+                    // Smoothing logic with time-based movement
                     auto& vel = m_left_stick_velocity[instance_id];
                     vel.first = vel.first * (1.0f - left_mapping.cursor_action.smoothing) + cursor_mx * left_mapping.cursor_action.smoothing;
                     vel.second = vel.second * (1.0f - left_mapping.cursor_action.smoothing) + cursor_my * left_mapping.cursor_action.smoothing;
 
-                    total_cursor_x += vel.first;
-                    total_cursor_y += vel.second;
+                    // Apply delta time to get movement for this frame
+                    total_cursor_x += vel.first * deltaTime;
+                    total_cursor_y += vel.second * deltaTime;
                     has_cursor_movement = true;
                 } else if (left_mapping.action_type == StickActionType::SCROLL) {
                     // Multi-directional scroll mouse wheel
@@ -357,16 +363,18 @@ private:
                         effective_sensitivity = right_mapping.cursor_action.boosted_sensitivity;
                     }
 
-                    float cursor_mx = right_mx * effective_sensitivity;
-                    float cursor_my = right_my * effective_sensitivity;
+                    // Calculate movement per second (time-based)
+                    float cursor_mx = right_mx * effective_sensitivity * 60.0f; // 60 pixels per second at full input
+                    float cursor_my = right_my * effective_sensitivity * 60.0f;
 
-                    // Smoothing logic
+                    // Smoothing logic with time-based movement
                     auto& vel = m_right_stick_velocity[instance_id];
                     vel.first = vel.first * (1.0f - right_mapping.cursor_action.smoothing) + cursor_mx * right_mapping.cursor_action.smoothing;
                     vel.second = vel.second * (1.0f - right_mapping.cursor_action.smoothing) + cursor_my * right_mapping.cursor_action.smoothing;
 
-                    total_cursor_x += vel.first;
-                    total_cursor_y += vel.second;
+                    // Apply delta time to get movement for this frame
+                    total_cursor_x += vel.first * deltaTime;
+                    total_cursor_y += vel.second * deltaTime;
                     has_cursor_movement = true;
                 } else if (right_mapping.action_type == StickActionType::SCROLL) {
                     // Multi-directional scroll mouse wheel
@@ -702,6 +710,10 @@ private:
     Uint32 m_last_repeat_time;
     std::unordered_map<int, std::unordered_map<std::string, Uint32>> m_button_press_times;
     std::unordered_map<int, std::unordered_map<std::string, Uint32>> m_last_repeat_times;
+
+    // Callback functions for core integration
+    ControllerConnectedCallback m_controllerConnectedCallback = nullptr;
+    ControllerDisconnectedCallback m_controllerDisconnectedCallback = nullptr;
 };
 
 // Factory function for main.cpp

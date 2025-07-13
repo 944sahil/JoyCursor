@@ -22,8 +22,12 @@ void Config::loadControllers() {
         nlohmann::json j;
         in >> j;
         if (j.contains("controllers") && j["controllers"].is_array()) {
-            for (const auto& guid : j["controllers"]) {
-                m_known_controller_guids.insert(guid.get<std::string>());
+            for (const auto& controller : j["controllers"]) {
+                if (controller.is_object() && controller.contains("guid") && controller.contains("name")) {
+                    std::string guid = controller["guid"].get<std::string>();
+                    std::string name = controller["name"].get<std::string>();
+                    m_known_controllers[guid] = name;
+                }
             }
         }
     }
@@ -31,7 +35,14 @@ void Config::loadControllers() {
 
 void Config::saveControllers() {
     nlohmann::json j;
-    j["controllers"] = m_known_controller_guids;
+    nlohmann::json controllers_array = nlohmann::json::array();
+    for (const auto& [guid, name] : m_known_controllers) {
+        controllers_array.push_back({
+            {"guid", guid},
+            {"name", name}
+        });
+    }
+    j["controllers"] = controllers_array;
     std::ofstream out(CONTROLLERS_JSON);
     out << j.dump(4);
 }
@@ -296,12 +307,12 @@ void Config::saveMappings() {
     out << m_mappings.dump(4);
 }
 
-const std::set<std::string>& Config::getKnownControllerGuids() const {
-    return m_known_controller_guids;
+const std::map<std::string, std::string>& Config::getKnownControllers() const {
+    return m_known_controllers;
 }
 
-void Config::addControllerGuid(const std::string& guid) {
-    m_known_controller_guids.insert(guid);
+void Config::addController(const std::string& guid, const std::string& name) {
+    m_known_controllers[guid] = name;
 }
 
 const nlohmann::json& Config::getMappingsJson() const {

@@ -2,5 +2,7 @@
     <qresource prefix="/icons">
         <file alias="gamepad.svg">icons/gamepad.svg</file>
         <file alias="gamepad.png">icons/gamepad.png</file>
+        <file alias="controller">icons/controller.svg</file>
+        <file alias="controller2">icons/sports_esports_48.png</file>
     </qresource>
 </RCC>
