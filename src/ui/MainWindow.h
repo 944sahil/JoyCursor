@@ -6,7 +6,8 @@
 #include <QWidget>
 #include <QPainter>
 #include <QThread>
-#include "../workers/ControllerWorker.h"
+#include "../workers/CoreWorker.h"
+#include "ControllerLibraryWindow.h"
 
 // Custom widget for a perfect green dot
 class DotWidget : public QWidget {
@@ -42,10 +43,13 @@ private:
     QPushButton* manageButton;
 
 private slots:
-    void onControllerConnected(const QString& name);
-    void onControllerDisconnected();
+    void onControllerConnected(const QString& guid, const QString& name);
+    void onControllerDisconnected(const QString& guid);
+    void onManageControllersClicked();
+    void onControllerLibraryClosed();
 
 private:
     QThread* workerThread;
-    ControllerWorker* controllerWorker;
+    CoreWorker* coreWorker;
+    ControllerLibraryWindow* controllerLibraryWindow;
 }; 

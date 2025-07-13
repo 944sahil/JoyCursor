@@ -16,7 +16,8 @@ MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
 {
     setStyleSheet("QMainWindow { background: #f9fafb; border-radius: 16px; } ");
-    resize(400, 260);
+    // resize(400, 260);
+    setFixedSize(400,260);
     QWidget* central = new QWidget(this);
     setCentralWidget(central);
     central->setStyleSheet("background: #f9fafb; border-radius: 16px;");
@@ -92,23 +93,28 @@ MainWindow::MainWindow(QWidget* parent)
     manageButton = new QPushButton("Manage All Controllers");
     manageButton->setStyleSheet("QPushButton { color: #1565c0; background: transparent; border: none; text-align: left; font-size: 15px; padding: 0; } QPushButton:hover { text-decoration: underline; }");
     manageButton->setCursor(Qt::PointingHandCursor);
+    connect(manageButton, &QPushButton::clicked, this, &MainWindow::onManageControllersClicked);
     mainLayout->addWidget(manageButton, 0, Qt::AlignLeft);
 
     // --- Worker thread setup ---
     workerThread = new QThread(this);
-    controllerWorker = new ControllerWorker();
-    controllerWorker->moveToThread(workerThread);
-    connect(workerThread, &QThread::finished, controllerWorker, &QObject::deleteLater);
-    connect(this, &QMainWindow::destroyed, workerThread, &QThread::quit);
-    connect(controllerWorker, &ControllerWorker::controllerConnected, this, &MainWindow::onControllerConnected);
-    connect(controllerWorker, &ControllerWorker::controllerDisconnected, this, &MainWindow::onControllerDisconnected);
+    coreWorker = new CoreWorker();
+    coreWorker->moveToThread(workerThread);
+    
+    connect(workerThread, &QThread::started, coreWorker, &CoreWorker::start);
+    connect(workerThread, &QThread::finished, coreWorker, &CoreWorker::stop);
+    connect(coreWorker, &CoreWorker::controllerConnected, this, &MainWindow::onControllerConnected);
+    connect(coreWorker, &CoreWorker::controllerDisconnected, this, &MainWindow::onControllerDisconnected);
+    
     workerThread->start();
-    QMetaObject::invokeMethod(controllerWorker, "start", Qt::QueuedConnection);
+    
+    // Initialize controller library window pointer
+    controllerLibraryWindow = nullptr;
 }
 
 MainWindow::~MainWindow() {
-    if (controllerWorker) {
-        QMetaObject::invokeMethod(controllerWorker, "stop", Qt::BlockingQueuedConnection);
+    if (coreWorker) {
+        QMetaObject::invokeMethod(coreWorker, "stop", Qt::BlockingQueuedConnection);
     }
     if (workerThread) {
         workerThread->quit();
@@ -116,14 +122,35 @@ MainWindow::~MainWindow() {
     }
 }
 
-void MainWindow::onControllerConnected(const QString& name) {
+void MainWindow::onControllerConnected(const QString& guid, const QString& name) {
     controllerNameLabel->setText(name);
     statusLabel->setText("Connected");
     if (profileStatusDot) static_cast<DotWidget*>(profileStatusDot)->setColor(QColor("#21c521")); // Green
 }
 
-void MainWindow::onControllerDisconnected() {
+void MainWindow::onControllerDisconnected(const QString& guid) {
     controllerNameLabel->setText("Controller");
     statusLabel->setText("Disconnected");
-    if (profileStatusDot) static_cast<DotWidget*>(profileStatusDot)->setColor(QColor("#FF3B30")); // Red
+    statusLabel->setStyleSheet("color: #555;");
+    static_cast<DotWidget*>(profileStatusDot)->setColor(QColor("#FF3B30"));
+    profileNameLabel->setText("Profile");
+}
+
+void MainWindow::onManageControllersClicked() {
+    if (!controllerLibraryWindow) {
+        controllerLibraryWindow = new ControllerLibraryWindow(coreWorker, nullptr); // Pass the existing coreWorker
+        connect(controllerLibraryWindow, &ControllerLibraryWindow::windowClosed, 
+                this, &MainWindow::onControllerLibraryClosed);
+    }
+    if (controllerLibraryWindow->isVisible()) {
+        controllerLibraryWindow->raise();
+        controllerLibraryWindow->activateWindow();
+    } else {
+        controllerLibraryWindow->show();
+    }
+}
+
+void MainWindow::onControllerLibraryClosed() {
+    // The window is closed but we keep the pointer for reuse
+    // The window will be deleted when MainWindow is destroyed
 } 
