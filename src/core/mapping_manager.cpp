@@ -3,6 +3,7 @@
 
 #include "mapping_manager.h"
 #include "utils/logging.h"
+#include <nlohmann/json.hpp>
 
 // Platform-specific function declarations
 extern "C" {
@@ -324,4 +325,169 @@ TriggerMapping MappingManager::getTriggerMapping(const std::string& guid, const 
     }
     m_parsed_trigger_mappings[guid][trigger_name] = mapping;
     return mapping;
+} 
+
+void MappingManager::clearCache() {
+    m_parsed_left_stick_mappings.clear();
+    m_parsed_right_stick_mappings.clear();
+    m_parsed_button_mappings.clear();
+    m_parsed_trigger_mappings.clear();
+}
+
+// --- ADDED: Setters for updating mappings ---
+void MappingManager::setButtonMapping(const std::string& guid, const std::string& button, const ButtonMapping& mapping) {
+    nlohmann::json button_json;
+    button_json["enabled"] = mapping.enabled;
+    button_json["actions"] = nlohmann::json::array();
+    for (const auto& action : mapping.actions) {
+        nlohmann::json action_json;
+        // MouseClickType to string
+        std::string click_type_str = "none";
+        switch (action.click_type) {
+            case MouseClickType::LEFT_CLICK: click_type_str = "mouse_left_click"; break;
+            case MouseClickType::RIGHT_CLICK: click_type_str = "mouse_right_click"; break;
+            case MouseClickType::MIDDLE_CLICK: click_type_str = "mouse_middle_click"; break;
+            default: break;
+        }
+        // KeyboardKeyType to string
+        std::string key_type_str = "none";
+        switch (action.key_type) {
+            case KeyboardKeyType::ENTER: key_type_str = "keyboard_enter"; break;
+            case KeyboardKeyType::ESCAPE: key_type_str = "keyboard_escape"; break;
+            case KeyboardKeyType::TAB: key_type_str = "keyboard_tab"; break;
+            case KeyboardKeyType::SPACE: key_type_str = "keyboard_space"; break;
+            case KeyboardKeyType::UP: key_type_str = "keyboard_up"; break;
+            case KeyboardKeyType::DOWN: key_type_str = "keyboard_down"; break;
+            case KeyboardKeyType::LEFT: key_type_str = "keyboard_left"; break;
+            case KeyboardKeyType::RIGHT: key_type_str = "keyboard_right"; break;
+            case KeyboardKeyType::ALT: key_type_str = "keyboard_alt"; break;
+            case KeyboardKeyType::CTRL: key_type_str = "keyboard_ctrl"; break;
+            case KeyboardKeyType::SHIFT: key_type_str = "keyboard_shift"; break;
+            case KeyboardKeyType::F1: key_type_str = "keyboard_f1"; break;
+            case KeyboardKeyType::F2: key_type_str = "keyboard_f2"; break;
+            case KeyboardKeyType::F3: key_type_str = "keyboard_f3"; break;
+            case KeyboardKeyType::F4: key_type_str = "keyboard_f4"; break;
+            case KeyboardKeyType::F5: key_type_str = "keyboard_f5"; break;
+            case KeyboardKeyType::F6: key_type_str = "keyboard_f6"; break;
+            case KeyboardKeyType::F7: key_type_str = "keyboard_f7"; break;
+            case KeyboardKeyType::F8: key_type_str = "keyboard_f8"; break;
+            case KeyboardKeyType::F9: key_type_str = "keyboard_f9"; break;
+            case KeyboardKeyType::F10: key_type_str = "keyboard_f10"; break;
+            case KeyboardKeyType::F11: key_type_str = "keyboard_f11"; break;
+            case KeyboardKeyType::F12: key_type_str = "keyboard_f12"; break;
+            default: break;
+        }
+        action_json["enabled"] = action.enabled;
+        action_json["action_type"] = (click_type_str != "none") ? click_type_str : key_type_str;
+        action_json["repeat_on_hold"] = action.repeat_on_hold;
+        action_json["repeat_delay"] = action.repeat_delay;
+        action_json["repeat_interval"] = action.repeat_interval;
+        button_json["actions"].push_back(action_json);
+    }
+    m_mappings_json["mappings"][guid]["buttons"][button] = button_json;
+}
+
+void MappingManager::setLeftStickMapping(const std::string& guid, const StickMapping& mapping) {
+    nlohmann::json stick_json;
+    stick_json["enabled"] = mapping.enabled;
+    stick_json["action_type"] = (mapping.action_type == StickActionType::CURSOR) ? "cursor" : (mapping.action_type == StickActionType::SCROLL ? "scroll" : "none");
+    stick_json["deadzone"] = mapping.deadzone;
+    // Cursor action
+    nlohmann::json cursor_json;
+    cursor_json["sensitivity"] = mapping.cursor_action.sensitivity;
+    cursor_json["boosted_sensitivity"] = mapping.cursor_action.boosted_sensitivity;
+    cursor_json["smoothing"] = mapping.cursor_action.smoothing;
+    stick_json["cursor_action"] = cursor_json;
+    // Scroll action
+    nlohmann::json scroll_json;
+    scroll_json["vertical_sensitivity"] = mapping.scroll_action.vertical_sensitivity;
+    scroll_json["horizontal_sensitivity"] = mapping.scroll_action.horizontal_sensitivity;
+    scroll_json["vertical_max_speed"] = mapping.scroll_action.vertical_max_speed;
+    scroll_json["horizontal_max_speed"] = mapping.scroll_action.horizontal_max_speed;
+    stick_json["scroll_action"] = scroll_json;
+    m_mappings_json["mappings"][guid]["left_stick"] = stick_json;
+}
+
+void MappingManager::setRightStickMapping(const std::string& guid, const StickMapping& mapping) {
+    nlohmann::json stick_json;
+    stick_json["enabled"] = mapping.enabled;
+    stick_json["action_type"] = (mapping.action_type == StickActionType::CURSOR) ? "cursor" : (mapping.action_type == StickActionType::SCROLL ? "scroll" : "none");
+    stick_json["deadzone"] = mapping.deadzone;
+    // Cursor action
+    nlohmann::json cursor_json;
+    cursor_json["sensitivity"] = mapping.cursor_action.sensitivity;
+    cursor_json["boosted_sensitivity"] = mapping.cursor_action.boosted_sensitivity;
+    cursor_json["smoothing"] = mapping.cursor_action.smoothing;
+    stick_json["cursor_action"] = cursor_json;
+    // Scroll action
+    nlohmann::json scroll_json;
+    scroll_json["vertical_sensitivity"] = mapping.scroll_action.vertical_sensitivity;
+    scroll_json["horizontal_sensitivity"] = mapping.scroll_action.horizontal_sensitivity;
+    scroll_json["vertical_max_speed"] = mapping.scroll_action.vertical_max_speed;
+    scroll_json["horizontal_max_speed"] = mapping.scroll_action.horizontal_max_speed;
+    stick_json["scroll_action"] = scroll_json;
+    m_mappings_json["mappings"][guid]["right_stick"] = stick_json;
+}
+
+void MappingManager::setTriggerMapping(const std::string& guid, const std::string& trigger, const TriggerMapping& mapping) {
+    nlohmann::json trigger_json;
+    trigger_json["enabled"] = mapping.enabled;
+    trigger_json["action_type"] = (mapping.action_type == TriggerActionType::BUTTON) ? "button" : (mapping.action_type == TriggerActionType::SCROLL ? "scroll" : "none");
+    trigger_json["threshold"] = mapping.threshold;
+    if (mapping.action_type == TriggerActionType::SCROLL) {
+        trigger_json["scroll_direction"] = mapping.scroll_direction;
+        nlohmann::json scroll_json;
+        scroll_json["vertical_sensitivity"] = mapping.trigger_scroll_action.vertical_sensitivity;
+        scroll_json["vertical_max_speed"] = mapping.trigger_scroll_action.vertical_max_speed;
+        trigger_json["trigger_scroll_action"] = scroll_json;
+    } else if (mapping.action_type == TriggerActionType::BUTTON) {
+        nlohmann::json button_action_json;
+        button_action_json["enabled"] = mapping.button_action.enabled;
+        button_action_json["actions"] = nlohmann::json::array();
+        for (const auto& action : mapping.button_action.actions) {
+            nlohmann::json action_json;
+            std::string click_type_str = "none";
+            switch (action.click_type) {
+                case MouseClickType::LEFT_CLICK: click_type_str = "mouse_left_click"; break;
+                case MouseClickType::RIGHT_CLICK: click_type_str = "mouse_right_click"; break;
+                case MouseClickType::MIDDLE_CLICK: click_type_str = "mouse_middle_click"; break;
+                default: break;
+            }
+            std::string key_type_str = "none";
+            switch (action.key_type) {
+                case KeyboardKeyType::ENTER: key_type_str = "keyboard_enter"; break;
+                case KeyboardKeyType::ESCAPE: key_type_str = "keyboard_escape"; break;
+                case KeyboardKeyType::TAB: key_type_str = "keyboard_tab"; break;
+                case KeyboardKeyType::SPACE: key_type_str = "keyboard_space"; break;
+                case KeyboardKeyType::UP: key_type_str = "keyboard_up"; break;
+                case KeyboardKeyType::DOWN: key_type_str = "keyboard_down"; break;
+                case KeyboardKeyType::LEFT: key_type_str = "keyboard_left"; break;
+                case KeyboardKeyType::RIGHT: key_type_str = "keyboard_right"; break;
+                case KeyboardKeyType::ALT: key_type_str = "keyboard_alt"; break;
+                case KeyboardKeyType::CTRL: key_type_str = "keyboard_ctrl"; break;
+                case KeyboardKeyType::SHIFT: key_type_str = "keyboard_shift"; break;
+                case KeyboardKeyType::F1: key_type_str = "keyboard_f1"; break;
+                case KeyboardKeyType::F2: key_type_str = "keyboard_f2"; break;
+                case KeyboardKeyType::F3: key_type_str = "keyboard_f3"; break;
+                case KeyboardKeyType::F4: key_type_str = "keyboard_f4"; break;
+                case KeyboardKeyType::F5: key_type_str = "keyboard_f5"; break;
+                case KeyboardKeyType::F6: key_type_str = "keyboard_f6"; break;
+                case KeyboardKeyType::F7: key_type_str = "keyboard_f7"; break;
+                case KeyboardKeyType::F8: key_type_str = "keyboard_f8"; break;
+                case KeyboardKeyType::F9: key_type_str = "keyboard_f9"; break;
+                case KeyboardKeyType::F10: key_type_str = "keyboard_f10"; break;
+                case KeyboardKeyType::F11: key_type_str = "keyboard_f11"; break;
+                case KeyboardKeyType::F12: key_type_str = "keyboard_f12"; break;
+                default: break;
+            }
+            action_json["enabled"] = action.enabled;
+            action_json["action_type"] = (click_type_str != "none") ? click_type_str : key_type_str;
+            action_json["repeat_on_hold"] = action.repeat_on_hold;
+            action_json["repeat_delay"] = action.repeat_delay;
+            action_json["repeat_interval"] = action.repeat_interval;
+            button_action_json["actions"].push_back(action_json);
+        }
+        trigger_json["button_action"] = button_action_json;
+    }
+    m_mappings_json["mappings"][guid]["triggers"][trigger] = trigger_json;
 } 

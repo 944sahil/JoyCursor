@@ -31,6 +31,15 @@ public:
     // Now also parses scroll_direction for scroll actions.
     TriggerMapping getTriggerMapping(const std::string& guid, const std::string& trigger_name);
 
+    // --- ADDED: Setters for updating mappings ---
+    void setButtonMapping(const std::string& guid, const std::string& button, const ButtonMapping& mapping);
+    void setLeftStickMapping(const std::string& guid, const StickMapping& mapping);
+    void setRightStickMapping(const std::string& guid, const StickMapping& mapping);
+    void setTriggerMapping(const std::string& guid, const std::string& trigger, const TriggerMapping& mapping);
+
+    // Clear cached mappings to force reload from JSON
+    void clearCache();
+
 private:
     void createMappingFromDefault(const std::string& guid);
 

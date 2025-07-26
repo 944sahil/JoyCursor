@@ -43,6 +43,12 @@ public:
     bool loadConfiguration(const std::string& configPath = "");
     bool saveConfiguration(const std::string& configPath = "");
     
+    // Clear mapping cache to force reload from JSON
+    void clearMappingCache();
+    
+    // Reload controller manager mappings
+    void reloadControllerMappings();
+    
     // Mapping access
     StickMapping getLeftStickMapping(const std::string& controllerGuid);
     StickMapping getRightStickMapping(const std::string& controllerGuid);

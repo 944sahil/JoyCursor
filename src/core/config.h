@@ -19,6 +19,9 @@ public:
 
     const nlohmann::json& getMappingsJson() const;
     nlohmann::json& getMappingsJson();
+    
+    // Reload mappings from JSON file
+    void reloadMappings();
 
 
 private:

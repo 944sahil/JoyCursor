@@ -8,6 +8,7 @@
 #include <QThread>
 #include "../workers/CoreWorker.h"
 #include "ControllerLibraryWindow.h"
+#include "ControllerCustomizationWindow.h"
 
 // Custom widget for a perfect green dot
 class DotWidget : public QWidget {
@@ -41,12 +42,16 @@ private:
     QLabel* profileNameLabel;
     QPushButton* configureButton;
     QPushButton* manageButton;
+    QString m_currentControllerGuid;
+    QString m_currentControllerName;
+    bool m_currentControllerConnected = false;
 
 private slots:
     void onControllerConnected(const QString& guid, const QString& name);
     void onControllerDisconnected(const QString& guid);
     void onManageControllersClicked();
     void onControllerLibraryClosed();
+    void onConfigureControllerClicked();
 
 private:
     QThread* workerThread;

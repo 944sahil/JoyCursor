@@ -118,6 +118,27 @@ public:
         m_controllerDisconnectedCallback = callback;
     }
 
+    void reloadMappings() {
+        // Reload the config mappings from JSON file
+        m_config.reloadMappings();
+        
+        // Clear the mapping manager's cache to force reload from JSON
+        m_mapping_manager.clearCache();
+        
+        // Reload mappings for active controllers
+        for (auto& [instance_id, gamepad] : m_active_controllers) {
+            SDL_Joystick* joystick = SDL_GetGamepadJoystick(gamepad);
+            SDL_GUID guid = SDL_GetJoystickGUID(joystick);
+            std::string guid_str = guid_to_string(guid);
+            
+            // Reload mappings for this controller
+            m_left_stick_mappings[instance_id] = m_mapping_manager.getLeftStick(guid_str);
+            m_right_stick_mappings[instance_id] = m_mapping_manager.getRightStick(guid_str);
+        }
+        
+        logInfo("Controller mappings reloaded from JSON");
+    }
+
 private:
     // Apply cubic scroll curve for natural feel
     float applyScrollCurve(float input) const {

@@ -227,7 +227,13 @@ void ControllerLibraryWindow::onControllerDisconnected(const QString& guid) {
 
 void ControllerLibraryWindow::onControllerCardClicked(const QString& guid) {
     emit controllerSelected(guid);
-    // (Future: open config window for this controller)
+    openCustomizationWindow(guid);
+}
+
+void ControllerLibraryWindow::openCustomizationWindow(const QString& guid) {
+    QString name = m_knownControllers.value(guid, "Unknown Controller");
+    bool connected = m_connectedGuids.contains(guid);
+    ControllerCustomizationWindow::openForController(guid, name, connected, m_coreWorker);
 }
 
 void ControllerLibraryWindow::updateControllerStatus(const QString& guid, bool connected) {

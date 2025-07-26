@@ -141,6 +141,18 @@ bool JoyCursorCore::saveConfiguration(const std::string& configPath) {
     }
 }
 
+void JoyCursorCore::clearMappingCache() {
+    if (m_mappingManager) {
+        m_mappingManager->clearCache();
+    }
+}
+
+void JoyCursorCore::reloadControllerMappings() {
+    if (m_controllerManager) {
+        m_controllerManager->reloadMappings();
+    }
+}
+
 StickMapping JoyCursorCore::getLeftStickMapping(const std::string& controllerGuid) {
     if (m_mappingManager) {
         return m_mappingManager->getLeftStick(controllerGuid);
@@ -170,24 +182,27 @@ TriggerMapping JoyCursorCore::getTriggerMapping(const std::string& controllerGui
 }
 
 void JoyCursorCore::setLeftStickMapping(const std::string& controllerGuid, const StickMapping& mapping) {
-    // This would need to be implemented in MappingManager
-    // For now, just log the request
-    logInfo(("Setting left stick mapping for controller: " + controllerGuid).c_str());
+    if (m_mappingManager) {
+        m_mappingManager->setLeftStickMapping(controllerGuid, mapping);
+    }
 }
 
 void JoyCursorCore::setRightStickMapping(const std::string& controllerGuid, const StickMapping& mapping) {
-    // This would need to be implemented in MappingManager
-    logInfo(("Setting right stick mapping for controller: " + controllerGuid).c_str());
+    if (m_mappingManager) {
+        m_mappingManager->setRightStickMapping(controllerGuid, mapping);
+    }
 }
 
 void JoyCursorCore::setButtonMapping(const std::string& controllerGuid, const std::string& button, const ButtonMapping& mapping) {
-    // This would need to be implemented in MappingManager
-    logInfo(("Setting button mapping for controller: " + controllerGuid + ", button: " + button).c_str());
+    if (m_mappingManager) {
+        m_mappingManager->setButtonMapping(controllerGuid, button, mapping);
+    }
 }
 
 void JoyCursorCore::setTriggerMapping(const std::string& controllerGuid, const std::string& trigger, const TriggerMapping& mapping) {
-    // This would need to be implemented in MappingManager
-    logInfo(("Setting trigger mapping for controller: " + controllerGuid + ", trigger: " + trigger).c_str());
+    if (m_mappingManager) {
+        m_mappingManager->setTriggerMapping(controllerGuid, trigger, mapping);
+    }
 }
 
 void JoyCursorCore::addKnownController(const std::string& guid, const std::string& name) {

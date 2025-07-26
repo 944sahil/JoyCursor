@@ -12,6 +12,7 @@
 #include "../workers/CoreWorker.h"
 #include <QEnterEvent>
 #include <QSet>
+#include "ControllerCustomizationWindow.h"
 
 // Card widget for a single controller
 class ControllerCard : public QFrame {
@@ -57,6 +58,7 @@ private slots:
     void onControllerConnected(const QString& guid, const QString& name);
     void onControllerDisconnected(const QString& guid);
     void onControllerCardClicked(const QString& guid);
+    void openCustomizationWindow(const QString& guid);
 
 private:
     void setupUI();

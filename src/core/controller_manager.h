@@ -20,6 +20,9 @@ public:
     virtual void setControllerConnectedCallback(ControllerConnectedCallback callback) = 0;
     virtual void setControllerDisconnectedCallback(ControllerDisconnectedCallback callback) = 0;
     
+    // Reload mappings from JSON
+    virtual void reloadMappings() = 0;
+    
     virtual ~ControllerManager() = default;
 };
 

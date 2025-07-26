@@ -88,7 +88,9 @@ MainWindow::MainWindow(QWidget* parent)
     configureButton = new QPushButton("Configure Controller");
     configureButton->setStyleSheet("QPushButton { color: #1565c0; background: transparent; border: none; text-align: left; font-size: 15px; padding: 0; } QPushButton:hover { text-decoration: underline; }");
     configureButton->setCursor(Qt::PointingHandCursor);
+    configureButton->setEnabled(false);
     mainLayout->addWidget(configureButton, 0, Qt::AlignLeft);
+    connect(configureButton, &QPushButton::clicked, this, &MainWindow::onConfigureControllerClicked);
 
     manageButton = new QPushButton("Manage All Controllers");
     manageButton->setStyleSheet("QPushButton { color: #1565c0; background: transparent; border: none; text-align: left; font-size: 15px; padding: 0; } QPushButton:hover { text-decoration: underline; }");
@@ -110,6 +112,7 @@ MainWindow::MainWindow(QWidget* parent)
     
     // Initialize controller library window pointer
     controllerLibraryWindow = nullptr;
+    // customizationWindow = nullptr;
 }
 
 MainWindow::~MainWindow() {
@@ -123,17 +126,25 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::onControllerConnected(const QString& guid, const QString& name) {
+    m_currentControllerGuid = guid;
+    m_currentControllerName = name;
+    m_currentControllerConnected = true;
     controllerNameLabel->setText(name);
     statusLabel->setText("Connected");
     if (profileStatusDot) static_cast<DotWidget*>(profileStatusDot)->setColor(QColor("#21c521")); // Green
+    configureButton->setEnabled(true);
 }
 
 void MainWindow::onControllerDisconnected(const QString& guid) {
+    m_currentControllerGuid.clear();
+    m_currentControllerName.clear();
+    m_currentControllerConnected = false;
     controllerNameLabel->setText("Controller");
     statusLabel->setText("Disconnected");
     statusLabel->setStyleSheet("color: #555;");
     static_cast<DotWidget*>(profileStatusDot)->setColor(QColor("#FF3B30"));
     profileNameLabel->setText("Profile");
+    configureButton->setEnabled(false);
 }
 
 void MainWindow::onManageControllersClicked() {
@@ -153,4 +164,10 @@ void MainWindow::onManageControllersClicked() {
 void MainWindow::onControllerLibraryClosed() {
     // The window is closed but we keep the pointer for reuse
     // The window will be deleted when MainWindow is destroyed
+} 
+
+void MainWindow::onConfigureControllerClicked() {
+    if (!m_currentControllerConnected)
+        return;
+    ControllerCustomizationWindow::openForController(m_currentControllerGuid, m_currentControllerName, m_currentControllerConnected, coreWorker);
 } 

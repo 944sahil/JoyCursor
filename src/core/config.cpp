@@ -321,4 +321,8 @@ const nlohmann::json& Config::getMappingsJson() const {
 
 nlohmann::json& Config::getMappingsJson() {
     return m_mappings;
+}
+
+void Config::reloadMappings() {
+    loadMappings();
 } 
